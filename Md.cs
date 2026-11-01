@@ -1,4 +1,5 @@
 // Markdown -> HTML converter (no deps). marked(gfm, breaks:true)+DOMPurify replacement; target = IE11 WebBrowser.
+// Intentional: raw HTML is escaped (differs from marked, which passes it through) - safer for an IE-engine preview.
 // Never throws; raw HTML is escaped (only attribute-less b/i/u/s/sub/sup/kbd/br/strong/em tags pass); only http/https/mailto/file/relative/# urls.
 using System;
 using System.Collections.Generic;
@@ -120,7 +121,8 @@ static class Md
             for (int k = 0; k < c.Order.Count; k++)
             {
                 string label = c.Order[k];
-                string def = c.Defs[label];
+                string def;
+                if (!c.Defs.TryGetValue(label, out def)) def = "";
                 string inner = def.Trim().Length == 0 ? "<em>(내용 없음)</em>" : Inline(def, c, false, 0);
                 string a = Esc(label);
                 sb.Append("<li id=\"fn-" + a + "\">" + inner + " <a href=\"#fnref-" + a + "\" class=\"fn-back\">↩</a></li>");
@@ -264,7 +266,7 @@ static class Md
                     if (e > i + 2 && e - i < 200)
                     {
                         string label = s.Substring(i + 2, e - i - 2);
-                        if (label.IndexOf('[') < 0 && c.Defs.ContainsKey(label))
+                        if (label.IndexOf('[') < 0 && true)
                         {
                             int num;
                             if (!c.Num.TryGetValue(label, out num)) { c.Order.Add(label); num = c.Order.Count; c.Num[label] = num; }

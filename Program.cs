@@ -26,15 +26,22 @@ static class Program
         mutex = new Mutex(true, "MdEditor_SingleInstance", out created);
         if (!created)
         {
-            SendToFirst(file ?? "");
+            if (!SendToFirst(file ?? ""))
+                MessageBox.Show("이미 실행 중인 창에 연결하지 못했습니다.", AppInfo.Title, MessageBoxButton.OK, MessageBoxImage.Warning);
             return 0;
         }
+        StartPipeServer();
         SetBrowserEmulation();
         var app = EnsureApp();
         app.ShutdownMode = ShutdownMode.OnMainWindowClose;
         var w = new MainWindow();
         if (file != null) w.OpenFileStartup(file);
-        StartPipeServer(w);
+        lock (pipeLock)
+        {
+            window = w;
+            foreach (var p in pending) { var pp = p; w.Dispatcher.BeginInvoke(new Action(() => w.ReceiveExternal(pp))); }
+            pending.Clear();
+        }
         Log.Write("load ms: " + sw.ElapsedMilliseconds);
         return app.Run(w);
     }
@@ -65,31 +72,53 @@ static class Program
         foreach (var a in args)
         {
             if (a.StartsWith("--")) continue;
-            if (Regex.IsMatch(a, @"\.(md|markdown|txt)$", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(a, @"^[^-].*\.(md|markdown|txt)$", RegexOptions.IgnoreCase))
             {
                 try { return Path.GetFullPath(a); } catch { return a; }
             }
-            break;
         }
         return null;
     }
 
-    static void SendToFirst(string path)
+    static bool SendToFirst(string path)
     {
-        try
+        var until = DateTime.UtcNow.AddSeconds(3);
+        while (true)
         {
-            using (var c = new NamedPipeClientStream(".", PipeName, PipeDirection.Out))
+            try
             {
-                c.Connect(3000);
-                var b = Encoding.UTF8.GetBytes(path + "\n");
-                c.Write(b, 0, b.Length);
-                c.Flush();
+                using (var c = new NamedPipeClientStream(".", PipeName, PipeDirection.Out))
+                {
+                    c.Connect(500);
+                    var b = Encoding.UTF8.GetBytes(path + "\n");
+                    c.Write(b, 0, b.Length);
+                    c.Flush();
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (DateTime.UtcNow >= until) { Log.Error("send to first", ex); return false; }
+                Thread.Sleep(150);
             }
         }
-        catch (Exception ex) { Log.Error("send to first", ex); }
     }
 
-    static void StartPipeServer(MainWindow w)
+    static readonly object pipeLock = new object();
+    static readonly System.Collections.Generic.List<string> pending = new System.Collections.Generic.List<string>();
+    static MainWindow window;
+
+    static void Deliver(string line)
+    {
+        lock (pipeLock)
+        {
+            if (window == null) { pending.Add(line); return; }
+            var w = window;
+            w.Dispatcher.BeginInvoke(new Action(() => w.ReceiveExternal(line)));
+        }
+    }
+
+    static void StartPipeServer()
     {
         var t = new Thread(() =>
         {
@@ -103,7 +132,7 @@ static class Program
                         using (var r = new StreamReader(s, Encoding.UTF8))
                         {
                             string line = r.ReadLine() ?? "";
-                            w.Dispatcher.BeginInvoke(new Action(() => w.ReceiveExternal(line)));
+                            Deliver(line);
                         }
                     }
                 }

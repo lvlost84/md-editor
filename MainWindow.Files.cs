@@ -16,6 +16,14 @@ partial class MainWindow
 
     void SetupFiles() { }
 
+    // programmatic replace that also drops the TextBox undo history
+    void SetEditorTextNoUndo(string t)
+    {
+        editor.IsUndoEnabled = false;
+        editor.Text = t;
+        editor.IsUndoEnabled = true;
+    }
+
     bool IsDirtyNow() { return editor != null && editor.Text != savedText; }
 
     void UpdateDirtyUi()
@@ -55,7 +63,9 @@ partial class MainWindow
         try
         {
             string t = File.ReadAllText(path, new UTF8Encoding(false, false));
-            editor.Text = t;
+            SetEditorTextNoUndo(t);
+            if (t.IndexOf('�') >= 0)
+                MessageBox.Show(this, "UTF-8이 아닌 파일로 보입니다. 저장하면 글자가 깨질 수 있습니다.", AppInfo.Title, MessageBoxButton.OK, MessageBoxImage.Warning);
             savedText = editor.Text;
             currentPath = path;
             fileNameBox.Text = Path.GetFileName(path);
@@ -83,13 +93,17 @@ partial class MainWindow
     // ---- save
     bool WriteTo(string path)
     {
+        string tmp = path + ".tmp";
         try
         {
-            File.WriteAllText(path, NormText(), Utf8NoBom);
+            File.WriteAllText(tmp, NormText(), Utf8NoBom);
+            if (File.Exists(path)) File.Replace(tmp, path, null);
+            else File.Move(tmp, path);
             return true;
         }
         catch (Exception ex)
         {
+            try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }
             Log.Error("save " + path, ex);
             MessageBox.Show(this, "저장 실패: " + ex.Message, AppInfo.Title, MessageBoxButton.OK, MessageBoxImage.Error);
             return false;
@@ -156,14 +170,29 @@ partial class MainWindow
             var host = new Window { Width = 800, Height = 600, Left = -3000, Top = 0, ShowInTaskbar = false, WindowStyle = WindowStyle.None };
             var wb = new WebBrowser();
             host.Content = wb;
-            bool done = false;
+            bool done = false, cleaned = false;
+            Action cleanup = () =>
+            {
+                if (cleaned) return; cleaned = true;
+                try { host.Close(); } catch { }
+                try { File.Delete(tmp); } catch { }
+            };
+            // fallback: close + delete after 60s even if printing/LoadCompleted never finishes
+            var fallback = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(60) };
+            fallback.Tick += (s, e) => { fallback.Stop(); cleanup(); };
+            fallback.Start();
             wb.LoadCompleted += (s, e) =>
             {
                 if (done) return; done = true;
+                try
+                {
+                    dynamic doc = wb.Document;
+                    // PrintTemplateTeardown fires when the print dialog/job is finished
+                    ((dynamic)doc).parentWindow.attachEvent("onafterprint", new Action(() => { fallback.Stop(); cleanup(); }));
+                }
+                catch { }
                 try { dynamic doc = wb.Document; doc.execCommand("print", true, null); }
-                catch (Exception ex) { Log.Error("print", ex); MessageBox.Show(this, "인쇄 실패: " + ex.Message, AppInfo.Title, MessageBoxButton.OK, MessageBoxImage.Error); }
-                host.Close();
-                try { File.Delete(tmp); } catch { }
+                catch (Exception ex) { Log.Error("print", ex); MessageBox.Show(this, "인쇄 실패: " + ex.Message, AppInfo.Title, MessageBoxButton.OK, MessageBoxImage.Error); fallback.Stop(); cleanup(); }
             };
             host.Show();
             wb.Navigate(new Uri(tmp));

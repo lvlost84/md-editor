@@ -46,7 +46,8 @@ partial class MainWindow
         previewTimer.Stop();
         UpdateFooter();
         string html = Md.PreviewDocument(NormText(), Theme.IsDark);
-        pendingScroll = keepScroll ? ReadScroll() : -1;
+        if (!keepScroll) pendingScroll = -1;
+        else if (!navigatingInternal) pendingScroll = ReadScroll();   // navigation in flight: keep earlier target
         lastHtml = html;
         navigatingInternal = true;
         browser.NavigateToString(html);
@@ -68,7 +69,7 @@ partial class MainWindow
         var u = e.Uri;
         if (u == null) return;                       // NavigateToString
         if (u.Scheme == "about") return;             // blank / in-page anchors
-        if (u.Scheme == "http" || u.Scheme == "https")
+        if (u.Scheme == "http" || u.Scheme == "https" || u.Scheme == "mailto")
         {
             e.Cancel = true;
             try { Process.Start(new ProcessStartInfo(u.AbsoluteUri) { UseShellExecute = true }); } catch (Exception ex) { Log.Error("link", ex); }

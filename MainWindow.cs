@@ -48,7 +48,7 @@ partial class MainWindow : Window
 
         SetupPreview();
         SetupFiles();
-        editor.Text = SampleText;
+        SetEditorTextNoUndo(SampleText);
         savedText = editor.Text;
         UpdateDirtyUi();
         UpdateFooter();
@@ -220,8 +220,8 @@ partial class MainWindow : Window
 
     void ApplyBindings()
     {
-        InputBindings.Add(new KeyBinding(new Cmd(() => WrapSel("**")), Key.B, ModifierKeys.Control));
-        InputBindings.Add(new KeyBinding(new Cmd(() => WrapSel("*")), Key.I, ModifierKeys.Control));
+        InputBindings.Add(new KeyBinding(new Cmd(() => { if (editor.IsKeyboardFocusWithin) WrapSel("**"); }), Key.B, ModifierKeys.Control));
+        InputBindings.Add(new KeyBinding(new Cmd(() => { if (editor.IsKeyboardFocusWithin) WrapSel("*"); }), Key.I, ModifierKeys.Control));
         InputBindings.Add(new KeyBinding(new Cmd(() => Save()), Key.S, ModifierKeys.Control));
         InputBindings.Add(new KeyBinding(new Cmd(() => DoOpen()), Key.O, ModifierKeys.Control));
         InputBindings.Add(new KeyBinding(new Cmd(() => SaveAs()), Key.S, ModifierKeys.Control | ModifierKeys.Shift));
