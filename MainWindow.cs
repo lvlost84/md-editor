@@ -111,6 +111,7 @@ partial class MainWindow : Window
         top.Children.Add(Btn("저장", () => Save()));
         top.Children.Add(Btn("다른 이름으로 저장", () => SaveAs()));
         top.Children.Add(Btn("HTML 내보내기", () => ExportHtml()));
+        top.Children.Add(Btn("도움말 (F1)", () => ShowHelp()));
         top.Children.Add(Btn("인쇄 / PDF", () => PrintPdf(), "PrimaryBtn"));
         DockPanel.SetDock(top, Dock.Right); dock.Children.Add(top);
 
@@ -219,6 +220,15 @@ partial class MainWindow : Window
         return outer;
     }
 
+    HelpWindow helpWin;
+    void ShowHelp()
+    {
+        if (helpWin != null) { helpWin.Activate(); return; }
+        helpWin = new HelpWindow(this, Theme.IsDark);
+        helpWin.Closed += (s, e) => helpWin = null;
+        helpWin.Show();
+    }
+
     void ApplyBindings()
     {
         InputBindings.Add(new KeyBinding(new Cmd(() => { if (editor.IsKeyboardFocusWithin) WrapSel("**"); }), Key.B, ModifierKeys.Control));
@@ -226,6 +236,7 @@ partial class MainWindow : Window
         InputBindings.Add(new KeyBinding(new Cmd(() => Save()), Key.S, ModifierKeys.Control));
         InputBindings.Add(new KeyBinding(new Cmd(() => DoOpen()), Key.O, ModifierKeys.Control));
         InputBindings.Add(new KeyBinding(new Cmd(() => SaveAs()), Key.S, ModifierKeys.Control | ModifierKeys.Shift));
+        InputBindings.Add(new KeyBinding(new Cmd(() => ShowHelp()), Key.F1, ModifierKeys.None));
         InputBindings.Add(new KeyBinding(new Cmd(() => ShowLog()), Key.F12, ModifierKeys.None));
         InputBindings.Add(new KeyBinding(new Cmd(() => OpenDataFolder()), Key.L, ModifierKeys.Control | ModifierKeys.Alt));
     }

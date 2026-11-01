@@ -159,6 +159,7 @@ static partial class SelfTest
         Try("md-perf", PerfTests);
         Try("editops", EditTests);
         Try("program", ProgramTests);
+        Try("help", HelpTests);
         try { UiTests(work); }
         catch (Exception ex) { fails++; res.Add("FAIL ui threw " + Short(ex.ToString())); }
 

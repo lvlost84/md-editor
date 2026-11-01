@@ -19,6 +19,7 @@ static class Program
     static int Main(string[] args)
     {
         if (args.Length > 0 && args[0] == "--selftest") return SelfTest.Run(args);
+        if (args.Length > 1 && args[0] == "--help-shot") { SetBrowserEmulation(); return HelpWindow.ShotAndExit(args[1], args.Length > 2 && args[2] == "dark"); }
         var sw = Stopwatch.StartNew();
         Log.Init();
         string file = FileArg(args);
