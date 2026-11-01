@@ -73,7 +73,7 @@ static class Md
             + "body{font-family:Georgia,serif;max-width:760px;margin:40px auto;padding:0 20px;line-height:1.7;color:#182233;} "
             + "code{background:#e7eff6;padding:.15em .4em;border-radius:4px;font-family:monospace;} "
             + "pre{background:#1a2332;color:#e8ecf1;padding:14px;border-radius:6px;overflow-x:auto;} "
-            + "pre code{background:none;color:inherit;} "
+            + "pre code{background:none;color:inherit;} li.task{list-style:none;} "
             + "blockquote{border-left:3px solid #b6742b;margin:1em 0;padding:.3em 1em;color:#5b6472;} "
             + "table{border-collapse:collapse;width:100%;} "
             + "th,td{border:1px solid #b9bcb2;padding:6px 10px;} "

@@ -134,7 +134,7 @@ static class EditOps
         {
             string ln = lines[i].TrimEnd(' ', '\t', '\r');
             string cell = (SepRe.IsMatch(ln) && ln.IndexOf('-') >= 0) ? " --- " : "  ";
-            string nw = ln.EndsWith("|") ? ln + cell + "|" : ln + " | " + cell.Trim();
+            string nw = ln.EndsWith("|") ? ln + cell + "|" : ln + " |" + cell + "|";
             if (i > 0) outp.Append(nl);
             if (i == caretLine) newCaret = bs + outp.Length + Math.Min(caretCol, nw.Length);
             outp.Append(nw);

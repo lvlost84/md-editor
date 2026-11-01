@@ -202,7 +202,7 @@ static partial class SelfTest
         h = Md.ToHtml("a[^x] b[^x]\n\n[^x]: def");
         Check("md footnote referenced twice -> one entry, same number", Count(h, "<li id=\"fn-x\">") == 1 && Count(h, "\\[1\\]</a>") == 2, h);
         h = Md.ToHtml("miss[^9] here");
-        Check("md footnote missing def stays literal, no list", h.Contains("miss[^9] here") && !h.Contains("footnotes"), h);
+        Check("md footnote missing def numbered with (no content)", h.Contains("[1]") && h.Contains("footnotes") && !h.Contains("[^9]"), h);
         h = Md.ToHtml("no ref\n\n[^1]: unused");
         Check("md footnote def without reference renders no list", !h.Contains("footnotes"), h);
 
@@ -508,6 +508,6 @@ static partial class SelfTest
         Check("FileArg skips -- flags", f(new[] { "--x", "b.md" }) == Path.GetFullPath("b.md"));
         Check("FileArg non-md ignored", f(new[] { "a.exe" }) == null && f(new[] { "a.md.exe" }) == null);
         Check("FileArg path with spaces", f(new[] { @"C:\my dir\한글 파일.md" }) == @"C:\my dir\한글 파일.md");
-        Check("FileArg only first non-flag arg considered", f(new[] { "a.exe", "b.md" }) == null);
+        Check("FileArg scans all args (as original find)", f(new[] { "a.exe", "b.md" }) == Path.GetFullPath("b.md"));
     }
 }
