@@ -31,6 +31,7 @@ partial class MainWindow : Window
         settings = Settings.Load();
         Theme.Apply(settings.Dark);
         Title = AppInfo.Title;
+        Icon = AppInfo.LoadIcon();
         Width = Math.Max(900, settings.Width); Height = Math.Max(600, settings.Height);
         MinWidth = 900; MinHeight = 600;
         FontFamily = new FontFamily("Malgun Gothic, Segoe UI");

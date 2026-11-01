@@ -9,7 +9,8 @@ set "FW=%WINDIR%\Microsoft.NET\Framework64\v4.0.30319"
 if not exist "%CSC%" goto nocsc
 if "%OUTDIR%"=="" set "OUTDIR=out"
 if not exist "%OUTDIR%" mkdir "%OUTDIR%"
-"%CSC%" /nologo /codepage:65001 /langversion:7.3 /target:winexe /platform:anycpu /optimize+ /out:"%OUTDIR%\MdEditor.exe" /r:"%FW%\WPF\PresentationFramework.dll" /r:"%FW%\WPF\PresentationCore.dll" /r:"%FW%\WPF\WindowsBase.dll" /r:"%FW%\System.Xaml.dll" /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Core.dll /r:System.Xml.Linq.dll /r:System.Xml.dll /r:System.Web.Extensions.dll /r:System.dll *.cs || exit /b 1
+if not exist app.ico powershell -NoProfile -ExecutionPolicy Bypass -File make_icon.ps1
+"%CSC%" /nologo /codepage:65001 /langversion:7.3 /target:winexe /platform:anycpu /optimize+ /win32icon:app.ico /resource:app.ico,MdEditor.app.ico /out:"%OUTDIR%\MdEditor.exe" /r:"%FW%\WPF\PresentationFramework.dll" /r:"%FW%\WPF\PresentationCore.dll" /r:"%FW%\WPF\WindowsBase.dll" /r:"%FW%\System.Xaml.dll" /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Core.dll /r:System.Xml.Linq.dll /r:System.Xml.dll /r:System.Web.Extensions.dll /r:System.dll *.cs || exit /b 1
 echo.
 echo Build OK: %OUTDIR%\MdEditor.exe
 goto :eof
