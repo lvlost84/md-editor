@@ -157,17 +157,17 @@ static partial class SelfTest
         string dark = w.PreviewHtml();
         Check("dark toggle changes PreviewHtml", dark != light && dark.Contains("#1e2024") && !light.Contains("#1e2024"), "");
         Check("dark toggle keeps content", dark.Contains("<h1>Dark</h1>"));
-        Check("dark: Theme.IsDark and brush swapped", Theme.IsDark && BrushHex("PaperBrush") == "#FF123A5E" && BrushHex("InkBrush") == "#FFEAF3FB", BrushHex("PaperBrush"));
+        Check("dark: Theme.IsDark and brush swapped", Theme.IsDark && BrushHex("PaperBrush") == "#FF1E2024" && BrushHex("InkBrush") == "#FFE6E8EC", BrushHex("PaperBrush"));
         Check("dark: settings.json written inside sandbox with Dark true", File.Exists(Settings.PathName) && Settings.PathName.StartsWith(Path.GetFullPath(Path.Combine(work, "..", "profile"))) && File.ReadAllText(Settings.PathName).Replace(" ", "").ToLower().Contains("\"dark\":true"), File.Exists(Settings.PathName) ? File.ReadAllText(Settings.PathName) : "missing");
         Check("dark: settings reload gives Dark", Settings.Load().Dark);
-        Check("dark: label says light-mode", FindText(w, "라이트모드"));
+        Check("dark: theme button tip says light-mode", SelfTest.HasButtonTip(w, "라이트 모드로"));
         string pngDark = Path.Combine(work, "dark.png");
         w.RenderToPng(pngDark);
         w.SetDark(false);
         Check("light: Theme + brush back", !Theme.IsDark && BrushHex("PaperBrush") == "#FFFFFFFF", BrushHex("PaperBrush"));
         Check("light: PreviewHtml restored", w.PreviewHtml() == light, "");
         Check("light: settings Dark false", !Settings.Load().Dark);
-        Check("light: label says dark-mode", FindText(w, "다크모드"));
+        Check("light: theme button tip says dark-mode", SelfTest.HasButtonTip(w, "다크 모드로"));
         string pngLight = Path.Combine(work, "light.png");
         w.RenderToPng(pngLight);
 
