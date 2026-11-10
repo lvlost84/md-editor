@@ -331,7 +331,7 @@ static partial class SelfTest
         Check("xss http link kept", Md.ToHtml("[x](https://a.com/p)").Contains("<a href=\"https://a.com/p\">x</a>"));
         Check("xss relative + anchor link kept", Md.ToHtml("[x](docs/a.md) [y](#sec)").Contains("href=\"docs/a.md\"") && Md.ToHtml("[y](#sec)").Contains("href=\"#sec\""));
         Check("xss mailto kept", Md.ToHtml("[x](mailto:a@b.c)").Contains("href=\"mailto:a@b.c\""));
-        Check("xss allowed simple tags kept", Md.ToHtml("<b>x</b> <kbd>k</kbd>").Contains("<b>x</b>") && Md.ToHtml("<kbd>k</kbd>").Contains("<kbd>k</kbd>"));
+        Check("xss raw html tags are escaped, not rendered (v3.0 Markdig, DisableHtml)", Md.ToHtml("<b>x</b> <kbd>k</kbd>").Contains("&lt;b&gt;x&lt;/b&gt;") && !Md.ToHtml("<kbd>k</kbd>").Contains("<kbd>"));
         Check("xss export document also safe", Unsafe(Md.ExportDocument("<script>x</script>[a](javascript:1)", "t").Split(new[] { "<body>" }, StringSplitOptions.None)[1]) == null);
     }
 

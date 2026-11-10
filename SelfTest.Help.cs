@@ -15,7 +15,7 @@ static partial class SelfTest
         Check("help renders example table", light.Contains("<th") && light.Contains("사과"), null);
         Check("help renders bold example", light.Contains("<strong>굵게</strong>"), null);
         Check("help renders footnote example", light.Contains("class=\"footnotes\""), null);
-        Check("help source shown escaped", light.Contains("&lt;kbd&gt;Ctrl&lt;/kbd&gt;"), null);
+        Check("help source shown escaped", light.Contains("&lt;b&gt;굵게&lt;/b&gt;"), null);
         Check("help image example not rendered", !light.Contains("<img"), null);
         Check("help dark differs from light", light != dark && dark.Contains("#123a5e"), null);
         Check("help no script", !light.ToLowerInvariant().Contains("<script"), null);

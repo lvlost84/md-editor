@@ -44,8 +44,8 @@ class HelpWindow : Window
             "본문 내용입니다.[^1] 또 다른 주석도 있습니다.[^2]\n\n[^1]: 첫 번째 각주 설명\n[^2]: 두 번째 각주 설명"),
         new Topic("esc", "특수문자 그대로 쓰기", "마크다운 기호를 글자 그대로 보이려면 앞에 \\ 를 붙입니다.",
             "\\*별표\\* 는 기울임이 아닙니다.\n\n\\# 샵 기호"),
-        new Topic("html", "HTML 태그", "보안을 위해 대부분의 HTML 태그는 해석하지 않고 글자로 보여 줍니다. 속성 없는 b, i, u, s, sub, sup, kbd, br 태그만 동작합니다.",
-            "물 H<sub>2</sub>O, 제곱 x<sup>2</sup>, 키 <kbd>Ctrl</kbd>+<kbd>S</kbd>"),
+        new Topic("html", "HTML 태그", "보안을 위해 문서 안의 HTML 태그는 해석하지 않고 입력한 그대로 글자로 보여 줍니다. 굵게/기울임 등은 마크다운 기호(**, *)를 사용하세요.",
+            "<b>굵게</b> 대신 **굵게**, <i>기울임</i> 대신 *기울임*"),
     };
 
     readonly WebBrowser browser = new WebBrowser();
