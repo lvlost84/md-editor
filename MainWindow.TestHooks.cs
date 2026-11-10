@@ -9,6 +9,9 @@ partial class MainWindow
 {
     public void SetText(string s) { editor.Text = s; }
     public string GetText() { return editor.Text; }
+    public int GutterLineCount() { return gutter.LineCount; }
+    public int GutterLineOf(int charIndex) { return gutter.LineOf(charIndex); }
+    public double GutterWidth() { return gutter.ActualWidth; }
     public string GetStatusText()
     {
         return footDoc.Text + " | " + footDate.Text + " | " + footRev.Text + " | " + footCount.Text + (footStatus.Text.Length > 0 ? " | " + footStatus.Text : "");

@@ -160,6 +160,7 @@ static partial class SelfTest
         Try("editops", EditTests);
         Try("program", ProgramTests);
         Try("help", HelpTests);
+        Try("gutter", () => GutterTests(work));
         try { UiTests(work); }
         catch (Exception ex) { fails++; res.Add("FAIL ui threw " + Short(ex.ToString())); }
 

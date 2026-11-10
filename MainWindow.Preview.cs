@@ -102,7 +102,8 @@ partial class MainWindow
         try
         {
             int c, w; EditOps.Count(NormText(), out c, out w);
-            footCount.Text = c + "자 · " + w + "단어";
+            string nt = NormText();
+            footCount.Text = (gutter != null ? gutter.LineCount : 1) + "줄 · " + c + "자 · " + w + "단어 · " + SizeFmt.Format(System.Text.Encoding.UTF8.GetByteCount(nt));
         }
         catch (NotImplementedException) { footCount.Text = "-"; }
     }

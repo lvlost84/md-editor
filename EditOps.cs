@@ -175,3 +175,14 @@ static class EditOps
         }
     }
 }
+
+static class SizeFmt
+{
+    // 파일 크기 표시: 1023 B / 12.3 KB / 1.25 MB
+    public static string Format(long bytes)
+    {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024L * 1024) return (bytes / 1024.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " KB";
+        return (bytes / 1048576.0).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " MB";
+    }
+}

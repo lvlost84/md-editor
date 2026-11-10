@@ -10,6 +10,7 @@ using System.Windows.Threading;
 partial class MainWindow : Window
 {
     internal TextBox editor, fileNameBox;
+    LineGutter gutter;
     TextBlock placeholder, footDoc, footDate, footRev, footCount, footStatus, darkLabel;
     Button darkBtn;
     readonly List<KeyValuePair<string, Action>> toolbar = new List<KeyValuePair<string, Action>>();
@@ -165,6 +166,11 @@ partial class MainWindow : Window
         placeholder = new TextBlock { Text = "여기에 마크다운을 입력하세요...", IsHitTestVisible = false, Margin = new Thickness(17, 12, 0, 0), FontFamily = new FontFamily("Consolas, Malgun Gothic"), FontSize = 14.5, Visibility = Visibility.Collapsed };
         Theme.Bind(placeholder, TextBlock.ForegroundProperty, "InkSoft");
         var eGrid = new Grid();
+        eGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        eGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        gutter = new LineGutter(editor);
+        Grid.SetColumn(gutter, 0); eGrid.Children.Add(gutter);
+        Grid.SetColumn(editor, 1); Grid.SetColumn(placeholder, 1);
         eGrid.Children.Add(editor); eGrid.Children.Add(placeholder);
         var left = Pane("편집 (Markdown)", eGrid);
         Grid.SetColumn(left, 0); g.Children.Add(left);
