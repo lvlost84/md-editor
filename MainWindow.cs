@@ -5,16 +5,21 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using ICSharpCode.AvalonEdit;
 
 // UI construction (code-only). Feature logic lives in the other MainWindow.*.cs files.
 partial class MainWindow : Window
 {
-    internal TextBox editor, fileNameBox;
-    LineGutter gutter;
-    TextBlock placeholder, footDoc, footDate, footRev, footCount, footStatus, darkLabel;
+    internal TextEditor editor;
+    internal TextBox fileNameBox;
+    TextBlock placeholder, footDoc, footDate, footRev, footCount, footStatus, footCaret, footZoom, footMode, darkLabel;
     Button darkBtn;
+    Grid paneGrid;
+    UIElement leftPane, rightPane;
+    GridSplitter splitter;
     readonly List<KeyValuePair<string, Action>> toolbar = new List<KeyValuePair<string, Action>>();
     Settings settings;
+    Prefs prefs;
 
     const string SampleText =
         "## 새 문서\n\n" +
@@ -30,6 +35,7 @@ partial class MainWindow : Window
     {
         Theme.Install();
         settings = Settings.Load();
+        prefs = Prefs.Load();
         Theme.Apply(settings.Dark);
         Title = AppInfo.Title;
         Icon = AppInfo.LoadIcon();
@@ -50,6 +56,7 @@ partial class MainWindow : Window
 
         SetupPreview();
         SetupFiles();
+        SetupEditor();
         SetEditorTextNoUndo(SampleText);
         savedText = editor.Text;
         UpdateDirtyUi();
@@ -57,22 +64,27 @@ partial class MainWindow : Window
         darkLabel.Text = Theme.IsDark ? "라이트모드" : "다크모드";
         editor.TextChanged += OnEditorChanged;
         ApplyBindings();
+        ApplyViewMode(false);
+        Topmost = prefs.Pin;
+        UpdateModeUi();
+        SetupRecovery();
         Closing += OnClosing;
-        Closed += (s, e) => SaveSettings();
+        Closed += (s, e) => { SaveSettings(); StopBackground(); };
     }
 
-    Button Btn(string label, Action act, string style = "TbBtn")
+    Button Btn(string label, Action act, string style = "TbBtn", string tip = null)
     {
         var b = new Button { Content = label };
         b.SetResourceReference(StyleProperty, style);
         b.Click += (s, e) => act();
+        if (tip != null) b.ToolTip = tip;
         return b;
     }
 
-    Button Tb(string label, Action act)
+    Button Tb(string label, Action act, string tip = null)
     {
         toolbar.Add(new KeyValuePair<string, Action>(label, act));
-        return Btn(label, act);
+        return Btn(label, act, "TbBtn", tip);
     }
 
     UIElement Sep()
@@ -105,15 +117,16 @@ partial class MainWindow : Window
         darkBtn = new Button();
         darkLabel = new TextBlock { Text = "다크모드" };
         darkBtn.Content = darkLabel;
+        darkBtn.ToolTip = Shortcuts.Tip("다크/라이트 모드 전환", "dark");
         darkBtn.SetResourceReference(StyleProperty, "TbBtn");
         darkBtn.Click += (s, e) => ToggleDark();
         top.Children.Add(darkBtn);
-        top.Children.Add(Btn("파일 열기", () => DoOpen()));
-        top.Children.Add(Btn("저장", () => Save()));
-        top.Children.Add(Btn("다른 이름으로 저장", () => SaveAs()));
+        top.Children.Add(Btn("파일 열기", () => DoOpen(), "TbBtn", Shortcuts.Tip("파일 열기", "open")));
+        top.Children.Add(Btn("저장", () => Save(), "TbBtn", Shortcuts.Tip("저장", "save")));
+        top.Children.Add(Btn("다른 이름으로 저장", () => SaveAs(), "TbBtn", Shortcuts.Tip("다른 이름으로 저장", "saveas")));
         top.Children.Add(Btn("HTML 내보내기", () => ExportHtml()));
         top.Children.Add(Btn("도움말 (F1)", () => ShowHelp()));
-        top.Children.Add(Btn("인쇄 / PDF", () => PrintPdf(), "PrimaryBtn"));
+        top.Children.Add(Btn("인쇄 / PDF", () => PrintPdf(), "PrimaryBtn", Shortcuts.Tip("인쇄 / PDF", "print")));
         DockPanel.SetDock(top, Dock.Right); dock.Children.Add(top);
 
         // middle: filename + toolbar
@@ -122,24 +135,24 @@ partial class MainWindow : Window
         Theme.Bind(fileNameBox, BackgroundProperty, "Paper"); Theme.Bind(fileNameBox, ForegroundProperty, "Ink"); Theme.Bind(fileNameBox, BorderBrushProperty, "BorderStrong");
         fileNameBox.TextChanged += (s, e) => { UpdateDirtyUi(); UpdateFooter(); };
         mid.Children.Add(fileNameBox);
-        mid.Children.Add(Tb("H1", () => ApplyOp(EditOps.LineStart(editor.Text, editor.SelectionStart, "# "))));
-        mid.Children.Add(Tb("H2", () => ApplyOp(EditOps.LineStart(editor.Text, editor.SelectionStart, "## "))));
-        mid.Children.Add(Tb("B", () => WrapSel("**")));
-        mid.Children.Add(Tb("I", () => WrapSel("*")));
+        mid.Children.Add(Tb("H1", () => DoHeading(1), Shortcuts.Tip("제목 1", "h1")));
+        mid.Children.Add(Tb("H2", () => DoHeading(2), Shortcuts.Tip("제목 2", "h2")));
+        mid.Children.Add(Tb("B", () => WrapSel("**"), Shortcuts.Tip("굵게", "bold")));
+        mid.Children.Add(Tb("I", () => WrapSel("*"), Shortcuts.Tip("기울임", "italic")));
         mid.Children.Add(Sep());
-        mid.Children.Add(Tb("• 목록", () => ApplyOp(EditOps.LineStart(editor.Text, editor.SelectionStart, "- "))));
-        mid.Children.Add(Tb("1. 목록", () => ApplyOp(EditOps.LineStart(editor.Text, editor.SelectionStart, "1. "))));
-        mid.Children.Add(Tb("\" 인용", () => ApplyOp(EditOps.LineStart(editor.Text, editor.SelectionStart, "> "))));
+        mid.Children.Add(Tb("• 목록", () => DoList("bullet"), Shortcuts.Tip("글머리 목록", "bullet")));
+        mid.Children.Add(Tb("1. 목록", () => DoList("numbered"), Shortcuts.Tip("번호 목록", "numbered")));
+        mid.Children.Add(Tb("\" 인용", () => DoList("quote"), Shortcuts.Tip("인용", "quote")));
         mid.Children.Add(Sep());
-        mid.Children.Add(Tb("</>", () => WrapSel("`")));
-        mid.Children.Add(Tb("코드블록", () => ApplyOp(EditOps.CodeBlock(editor.Text, editor.SelectionStart))));
-        mid.Children.Add(Tb("링크", () => ApplyOp(EditOps.Link(editor.Text, editor.SelectionStart, editor.SelectionLength))));
+        mid.Children.Add(Tb("</>", () => WrapSel("`"), Shortcuts.Tip("인라인 코드", "code")));
+        mid.Children.Add(Tb("코드블록", () => ApplyOp(EditOps.CodeBlock(editor.Text, editor.SelectionStart)), Shortcuts.Tip("코드 블록", "codeblock")));
+        mid.Children.Add(Tb("링크", () => ApplyOp(EditOps.Link(editor.Text, editor.SelectionStart, editor.SelectionLength)), Shortcuts.Tip("링크", "link")));
         mid.Children.Add(Sep());
-        mid.Children.Add(Tb("표 만들기", () => MakeTable()));
+        mid.Children.Add(Tb("표 만들기", () => MakeTable(), Shortcuts.Tip("표 만들기", "table")));
         mid.Children.Add(Tb("행 추가", () => ApplyOp(EditOps.AddRow(editor.Text, editor.SelectionStart))));
         mid.Children.Add(Tb("열 추가", () => ApplyOp(EditOps.AddCol(editor.Text, editor.SelectionStart))));
         mid.Children.Add(Sep());
-        mid.Children.Add(Tb("각주", () => ApplyOp(EditOps.InsertFootnote(editor.Text, editor.SelectionStart))));
+        mid.Children.Add(Tb("각주", () => ApplyOp(EditOps.InsertFootnote(editor.Text, editor.SelectionStart)), Shortcuts.Tip("각주", "footnote")));
         dock.Children.Add(mid);
         outer.Child = dock;
         return outer;
@@ -148,38 +161,34 @@ partial class MainWindow : Window
     UIElement BuildPanes()
     {
         var g = new Grid { Margin = new Thickness(12) };
+        paneGrid = g;
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 200 });
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 200 });
 
-        editor = new TextBox
+        editor = new TextEditor
         {
-            AcceptsReturn = true, AcceptsTab = false, TextWrapping = TextWrapping.Wrap,
-            FontFamily = new FontFamily("Consolas, Malgun Gothic"), FontSize = 14.5,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto, BorderThickness = new Thickness(0),
-            Padding = new Thickness(12), SpellCheck = { IsEnabled = false }
+            ShowLineNumbers = true, WordWrap = true,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            FontFamily = new FontFamily("Cascadia Mono, Consolas, Malgun Gothic"), FontSize = prefs.FontSize,
+            BorderThickness = new Thickness(0), Padding = new Thickness(4, 6, 6, 6)
         };
-        // 줄 높이 고정(TextBlock.SetLineHeight/BlockLineHeight)은 쓰지 않는다: 긴 문서에서 TextBox 줄 좌표가 어긋나 줄 번호 거터가 깨짐(LineGutter.cs 참고)
         Theme.Bind(editor, BackgroundProperty, "Paper"); Theme.Bind(editor, ForegroundProperty, "Ink");
-        editor.SetResourceReference(TextBox.CaretBrushProperty, "InkBrush");
-        placeholder = new TextBlock { Text = "여기에 마크다운을 입력하세요...", IsHitTestVisible = false, Margin = new Thickness(17, 12, 0, 0), FontFamily = new FontFamily("Consolas, Malgun Gothic"), FontSize = 14.5, Visibility = Visibility.Collapsed };
+        editor.SetResourceReference(TextEditor.LineNumbersForegroundProperty, "InkSoftBrush");
+        placeholder = new TextBlock { Text = "여기에 마크다운을 입력하세요...", IsHitTestVisible = false, Margin = new Thickness(50, 6, 0, 0), FontFamily = editor.FontFamily, FontSize = editor.FontSize, Visibility = Visibility.Collapsed };
         Theme.Bind(placeholder, TextBlock.ForegroundProperty, "InkSoft");
         var eGrid = new Grid();
-        eGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        eGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        gutter = new LineGutter(editor);
-        Grid.SetColumn(gutter, 0); eGrid.Children.Add(gutter);
-        Grid.SetColumn(editor, 1); Grid.SetColumn(placeholder, 1);
         eGrid.Children.Add(editor); eGrid.Children.Add(placeholder);
-        var left = Pane("편집 (Markdown)", eGrid);
-        Grid.SetColumn(left, 0); g.Children.Add(left);
+        leftPane = Pane("편집 (Markdown)", eGrid);
+        Grid.SetColumn(leftPane, 0); g.Children.Add(leftPane);
 
-        var split = new GridSplitter { HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch, ResizeBehavior = GridResizeBehavior.PreviousAndNext, Background = Brushes.Transparent };
-        Grid.SetColumn(split, 1); g.Children.Add(split);
+        splitter = new GridSplitter { HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch, ResizeBehavior = GridResizeBehavior.PreviousAndNext, Background = Brushes.Transparent };
+        Grid.SetColumn(splitter, 1); g.Children.Add(splitter);
 
         browser = new System.Windows.Controls.WebBrowser();
-        var right = Pane("미리보기", browser);
-        Grid.SetColumn(right, 2); g.Children.Add(right);
+        rightPane = Pane("미리보기", browser);
+        Grid.SetColumn(rightPane, 2); g.Children.Add(rightPane);
         return g;
     }
 
@@ -215,6 +224,14 @@ partial class MainWindow : Window
         var dock = new DockPanel();
         footCount = Cell("0자 · 0단어"); footCount.Margin = new Thickness(0);
         DockPanel.SetDock(footCount, Dock.Right); dock.Children.Add(footCount);
+        footCaret = Cell("Ln 1, Col 1"); footCaret.Margin = new Thickness(0, 0, 18, 0);
+        DockPanel.SetDock(footCaret, Dock.Right); dock.Children.Add(footCaret);
+        footZoom = Cell("100%"); footZoom.ToolTip = Shortcuts.Tip("글자 크기 (클릭하면 100%)", "zoomreset"); footZoom.Cursor = Cursors.Hand;
+        footZoom.MouseLeftButtonUp += (s, e) => ZoomReset();
+        DockPanel.SetDock(footZoom, Dock.Right); dock.Children.Add(footZoom);
+        footMode = Cell("분할"); footMode.ToolTip = Shortcuts.Tip("보기 전환 (클릭)", "view"); footMode.Cursor = Cursors.Hand;
+        footMode.MouseLeftButtonUp += (s, e) => CycleView();
+        DockPanel.SetDock(footMode, Dock.Right); dock.Children.Add(footMode);
         footStatus = Cell("", "Accent"); footStatus.Margin = new Thickness(0, 0, 18, 0);
         DockPanel.SetDock(footStatus, Dock.Right); dock.Children.Add(footStatus);
         var left = new StackPanel { Orientation = Orientation.Horizontal };
@@ -234,41 +251,10 @@ partial class MainWindow : Window
         helpWin.Show();
     }
 
-    void ApplyBindings()
-    {
-        InputBindings.Add(new KeyBinding(new Cmd(() => { if (editor.IsKeyboardFocusWithin) WrapSel("**"); }), Key.B, ModifierKeys.Control));
-        InputBindings.Add(new KeyBinding(new Cmd(() => { if (editor.IsKeyboardFocusWithin) WrapSel("*"); }), Key.I, ModifierKeys.Control));
-        InputBindings.Add(new KeyBinding(new Cmd(() => Save()), Key.S, ModifierKeys.Control));
-        InputBindings.Add(new KeyBinding(new Cmd(() => DoOpen()), Key.O, ModifierKeys.Control));
-        InputBindings.Add(new KeyBinding(new Cmd(() => SaveAs()), Key.S, ModifierKeys.Control | ModifierKeys.Shift));
-        InputBindings.Add(new KeyBinding(new Cmd(() => ShowHelp()), Key.F1, ModifierKeys.None));
-        InputBindings.Add(new KeyBinding(new Cmd(() => ShowLog()), Key.F12, ModifierKeys.None));
-        InputBindings.Add(new KeyBinding(new Cmd(() => OpenDataFolder()), Key.L, ModifierKeys.Control | ModifierKeys.Alt));
-    }
-
-    class Cmd : ICommand
-    {
-        readonly Action a;
-        public Cmd(Action a) { this.a = a; }
-        public bool CanExecute(object p) { return true; }
-        public void Execute(object p) { a(); }
-        public event EventHandler CanExecuteChanged { add { } remove { } }
-    }
-
     // ---- toolbar helpers
     void WrapSel(string m) { ApplyOp(EditOps.Wrap(editor.Text, editor.SelectionStart, editor.SelectionLength, m, m)); }
-
-    void ApplyOp(EditResult r)
-    {
-        if (!r.Ok) { MessageBox.Show(this, r.Error, AppInfo.Title, MessageBoxButton.OK, MessageBoxImage.Error); return; }
-        if (r.Text != editor.Text)
-        {
-            editor.Select(0, editor.Text.Length);
-            editor.SelectedText = r.Text;   // keeps the undo stack
-        }
-        editor.Focus();
-        editor.Select(r.SelStart, r.SelLength);
-    }
+    void DoHeading(int level) { ApplyOp(LineOps.Heading(editor.Text, editor.SelectionStart, editor.SelectionLength, level)); }
+    void DoList(string kind) { ApplyOp(LineOps.List(editor.Text, editor.SelectionStart, editor.SelectionLength, kind)); }
 
     internal static int[] TestTableSize;   // test hook: skips the modal
 
@@ -293,6 +279,7 @@ partial class MainWindow : Window
         darkLabel.Text = dark ? "라이트모드" : "다크모드";
         settings.Dark = dark;
         SaveSettings();
+        ApplyEditorTheme();
         RefreshPreviewNow(false);
     }
 

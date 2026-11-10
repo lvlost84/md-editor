@@ -16,15 +16,15 @@ partial class MainWindow
 
     void SetupFiles() { }
 
-    // programmatic replace that also drops the TextBox undo history
+    // programmatic replace that also drops the undo history (TextEditor.Text setter clears the undo stack)
     void SetEditorTextNoUndo(string t)
     {
-        editor.IsUndoEnabled = false;
         editor.Text = t;
-        editor.IsUndoEnabled = true;
+        editor.Document.UndoStack.ClearAll();
     }
 
-    bool IsDirtyNow() { return editor != null && editor.Text != savedText; }
+    // length check first: avoids copying a huge document on every keystroke
+    bool IsDirtyNow() { return editor != null && (editor.Document.TextLength != savedText.Length || editor.Text != savedText); }
 
     void UpdateDirtyUi()
     {
@@ -47,6 +47,7 @@ partial class MainWindow
     void OnClosing(object s, CancelEventArgs e)
     {
         if (!ConfirmDiscard()) e.Cancel = true;
+        else DeleteRecovery();
     }
 
     // ---- open
@@ -69,7 +70,9 @@ partial class MainWindow
             savedText = editor.Text;
             currentPath = path;
             fileNameBox.Text = Path.GetFileName(path);
-            editor.CaretIndex = 0;
+            editor.CaretOffset = 0;
+            editor.ScrollToHome();
+            DeleteRecovery();
             UpdateDirtyUi(); UpdateFooter();
             return true;
         }
@@ -86,7 +89,7 @@ partial class MainWindow
     internal void ReceiveExternal(string path)
     {
         if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
-        Activate(); Topmost = true; Topmost = false; Focus();
+        Activate(); bool pin = Topmost; Topmost = true; Topmost = pin; Focus();
         if (!string.IsNullOrEmpty(path) && ConfirmDiscard()) OpenFile(path);
     }
 
@@ -136,6 +139,7 @@ partial class MainWindow
     void AfterSave()
     {
         savedText = editor.Text;
+        DeleteRecovery();
         UpdateDirtyUi();
         FlashSaved();
     }
