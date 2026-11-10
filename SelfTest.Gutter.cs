@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Windows;
 
 // 줄 번호 거터 / 파일 크기 표시 검사
@@ -43,7 +44,34 @@ static partial class SelfTest
         Pump(500);
         Check("gutter widens for 4-digit line numbers", w.GutterWidth() > w1, w1 + " -> " + w.GutterWidth());
         Check("gutter width positive", w1 > 20, w1.ToString());
-        var lines = new System.Text.StringBuilder();
+
+        // 회귀: 편집창에 줄 높이를 고정하면 긴 문서(679줄 이후)에서 번호가 사라지던 문제.
+        // 스크롤해도, 맨 끝으로 가도, 줄바꿈이 많아도 보이는 줄에는 번호가 그려져야 하고 맨 위 번호가 실제 맨 위 줄이어야 한다.
+        var big = new StringBuilder();
+        for (int i = 1; i <= 2000; i++) big.Append("line " + i + "\r\n");
+        w.SetText(big.ToString()); Pump(600);
+        foreach (int ln in new[] { 0, 300, 700, 1000, 1500, 1990 })
+        {
+            w.ScrollToLine(ln); Pump(400);
+            Check("gutter numbers drawn after scrolling to line " + ln,
+                w.GutterDrawn() >= (ln > 1980 ? 8 : 20) && Math.Abs(w.GutterFirstNo() - w.GutterTopLogical()) <= 1, w.GutterInfo());
+        }
+        w.ScrollEnd(); Pump(500);
+        Check("gutter numbers drawn at document end", w.GutterDrawn() >= 8 && Math.Abs(w.GutterFirstNo() - w.GutterTopLogical()) <= 1, w.GutterInfo());
+
+        var wr = new StringBuilder();
+        for (int i = 1; i <= 1500; i++) wr.Append("L" + i + " " + (i % 3 == 0 ? string.Concat(System.Linq.Enumerable.Repeat("wrapped text ", 25)) : "short") + "\r\n");
+        string wrText = wr.ToString();
+        w.SetText(wrText); Pump(800);
+        w.ScrollEnd(); Pump(800);
+        Check("gutter (wrapped lines) drawn at end", w.GutterDrawn() >= 5 && Math.Abs(w.GutterFirstNo() - w.GutterTopLogical()) <= 1, w.GutterInfo());
+        foreach (int target in new[] { 700, 1200 })
+        {
+            w.SetCaret(wrText.IndexOf("L" + target + " ", StringComparison.Ordinal), 0); Pump(800);
+            Check("gutter (wrapped lines) drawn with caret in line " + target, w.GutterDrawn() >= 5 && Math.Abs(w.GutterFirstNo() - w.GutterTopLogical()) <= 1, w.GutterInfo());
+        }
+
+        var lines = new StringBuilder();
         for (int i = 1; i <= 40; i++) lines.Append(i == 5 ? string.Concat(System.Linq.Enumerable.Repeat("긴 줄입니다. ", 30)) : "줄 " + i + " 내용 **강조**").Append("\n");
         w.SetText(lines.ToString()); Pump(500);
         w.SetCaret(40, 0); Pump(300);

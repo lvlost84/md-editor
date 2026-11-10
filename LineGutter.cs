@@ -37,6 +37,7 @@ class LineGutter : FrameworkElement
     }
 
     public int LineCount { get { return nl.Length + 1; } }
+    public int Drawn, FirstNo;      // 마지막 그리기 결과 (테스트용)
 
     void Rebuild()
     {
@@ -70,24 +71,31 @@ class LineGutter : FrameworkElement
         var cur = (Brush)GetValue(CurBrushProperty) ?? fg;
         try
         {
-            int first = editor.GetFirstVisibleLineIndex(), last = editor.GetLastVisibleLineIndex();
-            if (first < 0 || last < first) return;
+            // 화면 맨 위 글자(hit test)에서 시작해 보이는 줄만 그린다. 주의: 편집창에 TextBlock.LineHeight(BlockLineHeight)를 지정하면
+            // TextBox 내부 줄 위치 계산이 문서가 길수록(수백 줄~) 어긋나 번호가 사라진다 -> 편집창은 기본 줄 높이를 유지할 것.
+            int lineTotal = editor.LineCount;
+            int topChar = editor.GetCharacterIndexFromPoint(new Point(editor.Padding.Left + 2, 1), true);
+            int first = topChar < 0 ? 0 : Math.Max(0, editor.GetLineIndexFromCharacterIndex(topChar) - 1);
+            Drawn = 0; FirstNo = 0;
             string t = editor.Text ?? "";
             int curLine = LineOf(editor.CaretIndex);
             double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
-            for (int i = first; i <= last; i++)
+            for (int i = first; i < lineTotal; i++)
             {
                 int ci = editor.GetCharacterIndexFromLineIndex(i);
                 if (ci < 0) continue;
                 if (ci > 0 && ci <= t.Length && t[ci - 1] != '\n') continue;   // 줄바꿈으로 이어진 줄
                 Rect r = editor.GetRectFromCharacterIndex(ci);
                 if (r.IsEmpty || double.IsInfinity(r.Top)) continue;
+                if (r.Top > ActualHeight) break;
+                if (r.Bottom < 0) continue;
                 int no = LineOf(ci);
                 var ft = new FormattedText(no.ToString(CultureInfo.InvariantCulture), CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
                     face, fontSize, no == curLine ? cur : fg, dpi);
                 if (no == curLine) ft.SetFontWeight(FontWeights.Bold);
                 double y = r.Top + (r.Height - ft.Height) / 2;
                 dc.DrawText(ft, new Point(ActualWidth - 10 - ft.Width, y));
+                if (Drawn++ == 0) FirstNo = no;
             }
         }
         catch { }

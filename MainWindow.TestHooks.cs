@@ -9,6 +9,12 @@ partial class MainWindow
 {
     public void SetText(string s) { editor.Text = s; }
     public string GetText() { return editor.Text; }
+    public int GutterTopLogical() { int c = editor.GetCharacterIndexFromPoint(new Point(editor.Padding.Left + 2, 1), true); return c < 0 ? 1 : gutter.LineOf(c); }
+    public void ScrollEnd() { editor.ScrollToEnd(); }
+    public int GutterDrawn() { return gutter.Drawn; }
+    public int GutterFirstNo() { return gutter.FirstNo; }
+    public string GutterInfo() { return "drawn=" + gutter.Drawn + " firstNo=" + gutter.FirstNo + " top=" + GutterTopLogical() + " vo=" + (int)editor.VerticalOffset + " lines=" + editor.LineCount; }
+    public void ScrollToLine(int i) { editor.ScrollToLine(i); }
     public int GutterLineCount() { return gutter.LineCount; }
     public int GutterLineOf(int charIndex) { return gutter.LineOf(charIndex); }
     public double GutterWidth() { return gutter.ActualWidth; }

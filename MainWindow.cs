@@ -159,8 +159,7 @@ partial class MainWindow : Window
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto, BorderThickness = new Thickness(0),
             Padding = new Thickness(12), SpellCheck = { IsEnabled = false }
         };
-        TextBlock.SetLineHeight(editor, 14.5 * 1.75);
-        TextBlock.SetLineStackingStrategy(editor, LineStackingStrategy.BlockLineHeight);
+        // 줄 높이 고정(TextBlock.SetLineHeight/BlockLineHeight)은 쓰지 않는다: 긴 문서에서 TextBox 줄 좌표가 어긋나 줄 번호 거터가 깨짐(LineGutter.cs 참고)
         Theme.Bind(editor, BackgroundProperty, "Paper"); Theme.Bind(editor, ForegroundProperty, "Ink");
         editor.SetResourceReference(TextBox.CaretBrushProperty, "InkBrush");
         placeholder = new TextBlock { Text = "여기에 마크다운을 입력하세요...", IsHitTestVisible = false, Margin = new Thickness(17, 12, 0, 0), FontFamily = new FontFamily("Consolas, Malgun Gothic"), FontSize = 14.5, Visibility = Visibility.Collapsed };
