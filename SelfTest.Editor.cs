@@ -27,7 +27,7 @@ static partial class SelfTest
         w.SetDark(true);
         string hd = w.HeadingColorHex(), bgD = w.EditorBackgroundHex(), selD = w.SelectionBrushHex();
         Check("ed highlight colour follows theme (heading light != dark)", hl.Length > 0 && hd.Length > 0 && hl != hd, hl + " / " + hd);
-        Check("ed background follows theme", bgL == "#FFFFFFFF" && bgD == "#FF123A5E", bgL + " / " + bgD);
+        Check("ed background follows theme", bgL == "#FFFFFFFF" && bgD == "#FF1E2024", bgL + " / " + bgD);
         Check("ed selection brush follows theme", selL.Length > 0 && selL != selD, selL + " / " + selD);
         w.SetDark(false);
 
