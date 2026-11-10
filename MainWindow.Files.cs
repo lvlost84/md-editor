@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -72,7 +72,7 @@ partial class MainWindow
             fileNameBox.Text = Path.GetFileName(path);
             editor.CaretOffset = 0;
             editor.ScrollToHome();
-            DeleteRecovery();
+            if (recoveryHandled) DeleteRecovery();
             UpdateDirtyUi(); UpdateFooter();
             return true;
         }

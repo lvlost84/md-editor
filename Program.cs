@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
@@ -59,6 +59,7 @@ static class Program
     static int RealMain(string[] args)
     {
         if (args.Length > 0 && args[0] == "--selftest") return SelfTest.Run(args);
+        if (args.Length > 1 && (args[0] == "--help-shot" || args[0] == "--shot")) SandboxProfile();   // 개발용 캡처는 실제 %AppData%\MdEditor(설정/복구 파일)를 건드리지 않는다
         if (args.Length > 1 && args[0] == "--help-shot") { SetBrowserEmulation(); return HelpWindow.ShotAndExit(args[1], args.Length > 2 && args[2] == "dark"); }
         if (args.Length > 1 && args[0] == "--shot") { SetBrowserEmulation(); return MainShot(args); }
         var sw = Stopwatch.StartNew();
@@ -93,7 +94,17 @@ static class Program
     public static MainWindow CreateForTest()
     {
         EnsureApp();
-        return new MainWindow();
+        var w = new MainWindow();
+        w.recoveryHandled = true;   // 테스트 창은 시작 시 복구 질문 단계를 이미 지난 것으로 본다
+        return w;
+    }
+
+    static void SandboxProfile()
+    {
+        string prof = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "mdeditor_shot_" + Guid.NewGuid().ToString("N"));
+        Environment.SetEnvironmentVariable("USERPROFILE", prof);
+        Environment.SetEnvironmentVariable("APPDATA", System.IO.Path.Combine(prof, "AppData", "Roaming"));
+        Environment.SetEnvironmentVariable("LOCALAPPDATA", System.IO.Path.Combine(prof, "AppData", "Local"));
     }
 
     [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool PrintWindow(IntPtr h, IntPtr dc, uint flags);
@@ -106,6 +117,7 @@ static class Program
         string md = args.Length > 3 ? args[3] : null;
         var app = EnsureApp();
         var w = new MainWindow();
+        w.recoveryHandled = true;
         w.Left = 20; w.Top = 20; w.Width = 1280; w.Height = 820;
         if (md != null) w.OpenFileForTest(md);
         w.Show();

@@ -1,4 +1,4 @@
-// Markdown -> HTML converter on Markdig 0.37 (lib\Markdig.dll). Target = IE11 WebBrowser; output normalised to the old hand-written converter's HTML.
+﻿// Markdown -> HTML converter on Markdig 0.37 (lib\Markdig.dll). Target = IE11 WebBrowser; output normalised to the old hand-written converter's HTML.
 // Intentional: raw HTML is escaped (DisableHtml; no tag passes). Never throws. Links/images/autolinks: only http/https/mailto/file/relative/#/drive-letter urls (AST walk).
 // Footnotes: own semantics (not Markdig's) - pre-pass swaps [^label] refs for private-use markers, AST walk numbers them by first reference.
 using System;
@@ -33,16 +33,20 @@ static class Md
     }
 
     // ---------------------------------------------------------------- public API
+    static string lastTimedOut;   // 마지막으로 시간 초과된 입력: 같은 글을 다시 변환하느라 4초씩 또 쓰지 않는다
+
     public static string ToHtml(string md)
     {
         md = md ?? "";
+        string bad = lastTimedOut;
+        if (bad != null && bad.Length == md.Length && string.Equals(bad, md, StringComparison.Ordinal)) return "<pre>" + Esc(md) + "</pre>";
         try
         {
             string res = null;
             var t = new Thread(() => { try { res = Convert(md); } catch (Exception) { res = null; } }, StackBytes);
             t.IsBackground = true;
             t.Start();
-            if (!t.Join(TimeoutMs)) { try { t.Abort(); } catch (Exception) { } } // pathological input (Markdig has a few quadratic paths): give up -> escaped source
+            if (!t.Join(TimeoutMs)) { lastTimedOut = md; try { t.Abort(); } catch (Exception) { } } // pathological input (Markdig has a few quadratic paths): give up -> escaped source
             else if (res != null) return res;
         }
         catch (Exception) { }
@@ -262,7 +266,8 @@ static class Md
             if (li != null)
             {
                 if (SafeUrl(li.Url) != null) continue;
-                if (li.IsImage) { li.ReplaceBy(new LiteralInline(PlainText(li))); }
+                if (li.IsImage) { li.ReplaceBy(new LiteralInline(PlainText(li)), false); }
+                else if (li.IsAutoLink) { li.ReplaceBy(new LiteralInline(li.Url ?? ""), false); }
                 else
                 {
                     Inline ch = li.FirstChild;

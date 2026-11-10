@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -61,12 +61,16 @@ partial class MainWindow
     }
 
     // debounce timer path: converter runs on a background task, the UI thread only navigates
+    bool previewBusy, previewAgain;
+
     void StartAsyncPreview()
     {
         UpdateFooter();
         int ver = ++previewVer;
         if (viewMode == 0) { return; }
         if (editor.Document.TextLength > PreviewPauseLimit) { Navigate(PausedHtml(), true); return; }
+        if (previewBusy) { previewAgain = true; return; }   // 변환 중이면 끝난 뒤 최신 글로 한 번 더
+        previewBusy = true;
         string text = NormText();
         bool dark = Theme.IsDark;
         Task.Run(() =>
@@ -81,6 +85,8 @@ partial class MainWindow
             {
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
+                    previewBusy = false;
+                    if (previewAgain) { previewAgain = false; StartAsyncPreview(); return; }
                     if (ver != previewVer || html == null) return;
                     try { Navigate(html, true); } catch (Exception ex) { Log.Error("preview navigate", ex); }
                 }));

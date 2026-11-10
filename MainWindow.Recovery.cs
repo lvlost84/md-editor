@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -76,6 +76,8 @@ partial class MainWindow
     }
 
     // at start (Program wires this to Loaded): ask whether to restore an unsaved document
+    internal bool recoveryHandled;   // false = 시작 시 복구 질문 전. 그때까지는 파일을 열어도 복구 파일을 지우지 않는다
+
     internal void OfferRecovery()
     {
         try
@@ -98,7 +100,9 @@ partial class MainWindow
             else
             {
                 string what = path.Length > 0 ? Path.GetFileName(path) : "제목 없는 문서";
-                yes = MessageBox.Show(this, "저장하지 않고 종료된 문서가 있습니다 (" + what + ").\n복구할까요?", AppInfo.Title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
+                string warn = "";
+                try { if (path.Length > 0 && File.Exists(path) && File.GetLastWriteTime(path) > File.GetLastWriteTime(RecoveryMd)) warn = "\n\n※ 이 파일은 임시 저장 이후에 다른 곳에서 수정되었습니다. 복구 후 저장하면 그 수정이 덮어써집니다."; } catch { }
+                yes = MessageBox.Show(this, "저장하지 않고 종료된 문서가 있습니다 (" + what + ").\n복구할까요?" + warn, AppInfo.Title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
             }
             if (!yes) { DeleteRecovery(); return; }
             string baseText = "";
@@ -113,5 +117,6 @@ partial class MainWindow
             RefreshPreviewNow(false);
         }
         catch (Exception ex) { Log.Error("offer recovery", ex); }
+        finally { recoveryHandled = true; }
     }
 }
