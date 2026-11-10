@@ -60,6 +60,7 @@ static class Program
     {
         if (args.Length > 0 && args[0] == "--selftest") return SelfTest.Run(args);
         if (args.Length > 1 && args[0] == "--help-shot") { SetBrowserEmulation(); return HelpWindow.ShotAndExit(args[1], args.Length > 2 && args[2] == "dark"); }
+        if (args.Length > 1 && args[0] == "--shot") { SetBrowserEmulation(); return MainShot(args); }
         var sw = Stopwatch.StartNew();
         Log.Init();
         string file = FileArg(args);
@@ -93,6 +94,41 @@ static class Program
     {
         EnsureApp();
         return new MainWindow();
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool PrintWindow(IntPtr h, IntPtr dc, uint flags);
+
+    // 개발용 화면 캡처: `MdEditor.exe --shot <png> [dark] [file.md]` — 단일 인스턴스 잠금과 무관, 자기 창만 PrintWindow(화면 캡처 아님)
+    static int MainShot(string[] args)
+    {
+        string png = args[1];
+        bool dark = args.Length > 2 && args[2] == "dark";
+        string md = args.Length > 3 ? args[3] : null;
+        var app = EnsureApp();
+        var w = new MainWindow();
+        w.Left = 20; w.Top = 20; w.Width = 1280; w.Height = 820;
+        if (md != null) w.OpenFileForTest(md);
+        w.Show();
+        if (dark) { var t0 = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1.2) }; t0.Tick += (s, e) => { t0.Stop(); w.SetDark(true); }; t0.Start(); }
+        var t = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+        t.Tick += (s, e) =>
+        {
+            t.Stop();
+            try
+            {
+                var h = new System.Windows.Interop.WindowInteropHelper(w).Handle;
+                using (var bmp = new System.Drawing.Bitmap((int)w.ActualWidth, (int)w.ActualHeight))
+                using (var g = System.Drawing.Graphics.FromImage(bmp))
+                {
+                    var dc = g.GetHdc(); PrintWindow(h, dc, 2); g.ReleaseHdc(dc);
+                    bmp.Save(png, System.Drawing.Imaging.ImageFormat.Png);
+                }
+            }
+            catch (Exception ex) { Log.Error("shot", ex); }
+            app.Shutdown();
+        };
+        t.Start();
+        return app.Run();
     }
 
     static Application EnsureApp()

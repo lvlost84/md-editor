@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;
@@ -67,18 +67,18 @@ partial class MainWindow
     {
         bool d = Theme.IsDark;
         var ta = editor.TextArea;
-        ta.SelectionBrush = Br(d ? "#2f6aa3" : "#b9d6f2");
+        ta.SelectionBrush = Br(d ? "#2f4f86" : "#cfe0fb");
         ta.SelectionForeground = null;
         ta.SelectionBorder = null;
-        ta.TextView.CurrentLineBackground = Br(d ? "#164b75" : "#eef3f8");
-        ta.TextView.CurrentLineBorder = new Pen(Br(d ? "#2c5480" : "#d9dad3"), 1);
-        ta.Caret.CaretBrush = Br(d ? "#eaf3fb" : "#182233");
+        ta.TextView.CurrentLineBackground = Br(d ? "#25282e" : "#f4f6fa");
+        ta.TextView.CurrentLineBorder = new Pen(Br(d ? "#25282e" : "#f4f6fa"), 1);
+        ta.Caret.CaretBrush = Br(d ? "#e6e8ec" : "#1c1d20");
         if (searchPanel != null) searchPanel.MarkerBrush = Br(d ? "#7a5c10" : "#ffe08a");
         if (mdDef != null) { RecolorHighlighting(d); ta.TextView.Redraw(); }
     }
 
-    static readonly string[] HlLight = { "Heading", "#1f5f99", "Emphasis", "#6a3d9a", "StrongEmphasis", "#6a3d9a", "Code", "#8a4b08", "BlockQuote", "#3f7a2c", "Link", "#0b5fb0", "Image", "#0b5fb0", "LineBreak", "#8a8f99" };
-    static readonly string[] HlDark = { "Heading", "#7ecbe8", "Emphasis", "#d4a8ff", "StrongEmphasis", "#d4a8ff", "Code", "#e0a458", "BlockQuote", "#9ad08a", "Link", "#7ec8ff", "Image", "#7ec8ff", "LineBreak", "#9fbdd6" };
+    static readonly string[] HlLight = { "Heading", "#1d4ed8", "Emphasis", "#6a3d9a", "StrongEmphasis", "#6a3d9a", "Code", "#8a4b08", "BlockQuote", "#3f7a2c", "Link", "#0b5fb0", "Image", "#0b5fb0", "LineBreak", "#8a8f99" };
+    static readonly string[] HlDark = { "Heading", "#7aa7ff", "Emphasis", "#d4a8ff", "StrongEmphasis", "#d4a8ff", "Code", "#e0a458", "BlockQuote", "#9ad08a", "Link", "#7ec8ff", "Image", "#7ec8ff", "LineBreak", "#9fbdd6" };
 
     void RecolorHighlighting(bool dark)
     {
@@ -147,6 +147,7 @@ partial class MainWindow
         Status.Pinned = Topmost;
         footZoom.Text = Status.ZoomPercent + "%";
         footMode.Text = Status.ViewMode + (Topmost ? " · 항상 위" : "");
+        UpdatePinUi();
         Status.Changed();
     }
 

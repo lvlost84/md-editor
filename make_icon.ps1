@@ -17,7 +17,7 @@ function New-IconBitmap([int]$size) {
     $path.AddArc($size - $d, $size - $d, $d, $d, 0, 90); $path.AddArc(0, $size - $d, $d, $d, 90, 90)
     $path.CloseFigure()
     $rect = New-Object System.Drawing.RectangleF 0, 0, $size, $size
-    $br = New-Object System.Drawing.Drawing2D.LinearGradientBrush $rect, ([System.Drawing.Color]::FromArgb(255, 58, 124, 178)), ([System.Drawing.Color]::FromArgb(255, 24, 62, 100)), 90
+    $br = New-Object System.Drawing.Drawing2D.LinearGradientBrush $rect, ([System.Drawing.Color]::FromArgb(255, 59, 130, 246)), ([System.Drawing.Color]::FromArgb(255, 29, 78, 216)), 90
     $g.FillPath($br, $path)
     $white = [System.Drawing.Brushes]::White
     $fs = [single]($size * 0.40)

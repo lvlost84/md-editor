@@ -52,8 +52,8 @@ static class Md
     public static string PreviewDocument(string md, bool dark)
     {
         string bg, ink, soft, acc, accSoft, bord, amber;
-        if (dark) { bg = "#123a5e"; ink = "#eaf3fb"; soft = "#9fbdd6"; acc = "#7ecbe8"; accSoft = "#1d456b"; bord = "#3e6c9c"; amber = "#e0a458"; }
-        else { bg = "#fff"; ink = "#182233"; soft = "#5b6472"; acc = "#2b5f8c"; accSoft = "#e7eff6"; bord = "#b9bcb2"; amber = "#b6742b"; }
+        if (dark) { bg = "#1e2024"; ink = "#e6e8ec"; soft = "#9aa1ad"; acc = "#7aa7ff"; accSoft = "#26324f"; bord = "#3a3e46"; amber = "#e0a458"; }
+        else { bg = "#fff"; ink = "#1c1d20"; soft = "#6b6f76"; acc = "#2563eb"; accSoft = "#e8effd"; bord = "#d3d3cf"; amber = "#b45309"; }
         var css = new StringBuilder();
         css.Append("body{margin:0;background:" + bg + ";color:" + ink + ";font-family:'Malgun Gothic','Segoe UI',sans-serif;font-size:15px;line-height:1.75;padding:22px 30px;}");
         css.Append("h1,h2,h3{font-weight:700;letter-spacing:-.01em;margin-top:1.3em;}");

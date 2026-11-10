@@ -155,7 +155,7 @@ static partial class SelfTest
         string light = w.PreviewHtml();
         w.SetDark(true);
         string dark = w.PreviewHtml();
-        Check("dark toggle changes PreviewHtml", dark != light && dark.Contains("#123a5e") && !light.Contains("#123a5e"), "");
+        Check("dark toggle changes PreviewHtml", dark != light && dark.Contains("#1e2024") && !light.Contains("#1e2024"), "");
         Check("dark toggle keeps content", dark.Contains("<h1>Dark</h1>"));
         Check("dark: Theme.IsDark and brush swapped", Theme.IsDark && BrushHex("PaperBrush") == "#FF123A5E" && BrushHex("InkBrush") == "#FFEAF3FB", BrushHex("PaperBrush"));
         Check("dark: settings.json written inside sandbox with Dark true", File.Exists(Settings.PathName) && Settings.PathName.StartsWith(Path.GetFullPath(Path.Combine(work, "..", "profile"))) && File.ReadAllText(Settings.PathName).Replace(" ", "").ToLower().Contains("\"dark\":true"), File.Exists(Settings.PathName) ? File.ReadAllText(Settings.PathName) : "missing");

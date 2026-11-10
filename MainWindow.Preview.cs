@@ -93,7 +93,7 @@ partial class MainWindow
     {
         bool d = Theme.IsDark;
         return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\"></head><body style=\"font-family:'Malgun Gothic',sans-serif;padding:32px;background:"
-            + (d ? "#123a5e;color:#eaf3fb" : "#ffffff;color:#182233")
+            + (d ? "#1e2024;color:#e6e8ec" : "#ffffff;color:#1c1d20")
             + "\"><h3>미리보기 일시 중지 (큰 파일)</h3><p>문서가 매우 커서 미리보기를 쉬고 있습니다. 문서가 작아지면 자동으로 다시 표시됩니다. (Ctrl+Shift+V: 보기 전환)</p></body></html>";
     }
 

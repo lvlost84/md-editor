@@ -237,7 +237,7 @@ static partial class SelfTest
         Known("export lacks li.task rule (task list shows bullets in exported html)", ex.Contains("li.task"), "");
         Check("preview IE edge meta + charset", pv.Contains("X-UA-Compatible") && pv.Contains("charset=\"utf-8\""));
         Check("export doctype/charset/lang", ex.StartsWith("<!DOCTYPE html>") && ex.Contains("<meta charset=\"UTF-8\">") && ex.Contains("lang=\"ko\""));
-        Check("preview light vs dark bg differ", pv.Contains("background:#fff;") && pd.Contains("background:#123a5e;") && !pd.Contains("background:#fff;color"), pd.Substring(0, 300));
+        Check("preview light vs dark bg differ", pv.Contains("background:#fff;") && pd.Contains("background:#1e2024;") && !pd.Contains("background:#fff;color"), pd.Substring(0, 300));
         Check("preview body contains converted markdown", Md.PreviewDocument("# Z", false).Contains("<h1>Z</h1>\n</body>"));
         string t1 = Md.ExportDocument("x", "</title><script>alert(1)</script>&\"q");
         Check("export title escaped", !t1.Contains("<script>alert") && t1.Contains("<title>&lt;/title&gt;&lt;script&gt;alert(1)&lt;/script&gt;&amp;&quot;q</title>"), t1.Substring(0, 250));

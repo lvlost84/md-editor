@@ -3,7 +3,7 @@ using System.Windows.Media.Imaging;
 
 static class AppInfo
 {
-    public const string Version = "2.2.1";   // 2.2.1: 긴 문서에서 줄 번호가 사라지던 문제 수정(줄 높이 고정 제거)
+    public const string Version = "3.0.0";   // 3.0.0: AvalonEdit+Markdig, 워드식 단축키, 새 UI
     public const string Developer = "";
     public const string Title = "로컬 마크다운 에디터";
 
