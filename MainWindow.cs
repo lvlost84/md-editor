@@ -117,7 +117,9 @@ partial class MainWindow : Window
     void SetThemeIcon()
     {
         themeBtn.Content = Icons.Make(Theme.IsDark ? "sun" : "moon", 18);
-        themeBtn.ToolTip = Shortcuts.Tip(Theme.IsDark ? "라이트 모드로" : "다크 모드로", "dark");
+        string themeTip = Shortcuts.Tip(Theme.IsDark ? "라이트 모드로" : "다크 모드로", "dark");
+        themeBtn.ToolTip = themeTip;
+        System.Windows.Automation.AutomationProperties.SetName(themeBtn, themeTip);
     }
 
     UIElement BuildHeader()
