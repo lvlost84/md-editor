@@ -110,13 +110,10 @@ class HelpWindow : Window
         }
 
         body.Append("<h2 id=\"t-keys\">단축키</h2><table><tr><th>키</th><th>동작</th></tr>");
-        string[][] keys =
-        {
-            new[] { "Ctrl + B", "굵게 (편집창에서)" }, new[] { "Ctrl + I", "기울임 (편집창에서)" },
-            new[] { "Ctrl + S", "저장" }, new[] { "Ctrl + Shift + S", "다른 이름으로 저장" }, new[] { "Ctrl + O", "파일 열기" },
-            new[] { "F1", "이 도움말" }, new[] { "F12", "진단 정보(로그) 보기" }, new[] { "Ctrl + Alt + L", "로그 폴더 열기" },
-        };
-        foreach (var k in keys) body.Append("<tr><td><kbd>" + Esc(k[0]) + "</kbd></td><td>" + Esc(k[1]) + "</td></tr>");
+        // generated from Shortcuts.All so help, tooltips and key bindings can never drift apart
+        foreach (var k in Shortcuts.All)
+            body.Append("<tr><td><kbd>" + Esc(k.Display(" + ")) + "</kbd></td><td>" + Esc(k.Desc + (k.EditorOnly && !k.Builtin ? " (편집창에서)" : "")) + "</td></tr>");
+        foreach (var k in Shortcuts.BuiltinRows) body.Append("<tr><td><kbd>" + Esc(k[0]) + "</kbd></td><td>" + Esc(k[1]) + "</td></tr>");
         body.Append("</table>");
 
         string css = "<style>.toc{margin:12px 0 4px;line-height:2;}.toc a{text-decoration:none;}table.ex{table-layout:fixed;}"

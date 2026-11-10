@@ -15,8 +15,48 @@ static class Program
     const string PipeName = "MdEditor_Pipe";
     static Mutex mutex;
 
+    // First thing Main does. Must stay in a method/class that references no AvalonEdit/Markdig type (JIT order).
+    static class Embedded
+    {
+        static readonly System.Collections.Generic.Dictionary<string, System.Reflection.Assembly> cache = new System.Collections.Generic.Dictionary<string, System.Reflection.Assembly>();
+        public static void Install()
+        {
+            AppDomain.CurrentDomain.AssemblyResolve += (s, e) =>
+            {
+                try
+                {
+                    string n = new System.Reflection.AssemblyName(e.Name).Name + ".dll";
+                    lock (cache)
+                    {
+                        System.Reflection.Assembly a;
+                        if (cache.TryGetValue(n, out a)) return a;
+                        var me = System.Reflection.Assembly.GetExecutingAssembly();
+                        using (var st = me.GetManifestResourceStream(n))
+                        {
+                            if (st == null) return null;
+                            var buf = new byte[st.Length];
+                            int off = 0;
+                            while (off < buf.Length) { int r = st.Read(buf, off, buf.Length - off); if (r <= 0) break; off += r; }
+                            a = System.Reflection.Assembly.Load(buf);
+                            cache[n] = a;
+                            return a;
+                        }
+                    }
+                }
+                catch { return null; }
+            };
+        }
+    }
+
     [STAThread]
     static int Main(string[] args)
+    {
+        Embedded.Install();
+        return RealMain(args);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    static int RealMain(string[] args)
     {
         if (args.Length > 0 && args[0] == "--selftest") return SelfTest.Run(args);
         if (args.Length > 1 && args[0] == "--help-shot") { SetBrowserEmulation(); return HelpWindow.ShotAndExit(args[1], args.Length > 2 && args[2] == "dark"); }
@@ -37,6 +77,7 @@ static class Program
         app.ShutdownMode = ShutdownMode.OnMainWindowClose;
         var w = new MainWindow();
         if (file != null) w.OpenFileStartup(file);
+        w.Loaded += (s, e) => w.Dispatcher.BeginInvoke(new Action(w.OfferRecovery));
         lock (pipeLock)
         {
             window = w;

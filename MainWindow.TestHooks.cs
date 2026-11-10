@@ -4,24 +4,23 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-// Test hooks used by SelfTest.cs (no screen capture: RenderTargetBitmap only).
+// Test hooks used by SelfTest*.cs (no screen capture: RenderTargetBitmap only).
 partial class MainWindow
 {
     public void SetText(string s) { editor.Text = s; }
     public string GetText() { return editor.Text; }
-    public int GutterTopLogical() { int c = editor.GetCharacterIndexFromPoint(new Point(editor.Padding.Left + 2, 1), true); return c < 0 ? 1 : gutter.LineOf(c); }
+    public int TextLen() { return editor.Document.TextLength; }
+    public int LineCountNow() { return editor.Document.LineCount; }
     public void ScrollEnd() { editor.ScrollToEnd(); }
-    public int GutterDrawn() { return gutter.Drawn; }
-    public int GutterFirstNo() { return gutter.FirstNo; }
-    public string GutterInfo() { return "drawn=" + gutter.Drawn + " firstNo=" + gutter.FirstNo + " top=" + GutterTopLogical() + " vo=" + (int)editor.VerticalOffset + " lines=" + editor.LineCount; }
     public void ScrollToLine(int i) { editor.ScrollToLine(i); }
-    public int GutterLineCount() { return gutter.LineCount; }
-    public int GutterLineOf(int charIndex) { return gutter.LineOf(charIndex); }
-    public double GutterWidth() { return gutter.ActualWidth; }
+    public double VerticalOffset() { return editor.VerticalOffset; }
     public string GetStatusText()
     {
         return footDoc.Text + " | " + footDate.Text + " | " + footRev.Text + " | " + footCount.Text + (footStatus.Text.Length > 0 ? " | " + footStatus.Text : "");
     }
+    public string FooterCaretText() { return footCaret.Text; }
+    public string FooterZoomText() { return footZoom.Text; }
+    public string FooterModeText() { return footMode.Text; }
     public bool ClickToolbar(string label)
     {
         foreach (var kv in toolbar) if (kv.Key == label) { kv.Value(); return true; }
@@ -48,6 +47,46 @@ partial class MainWindow
     }
     public void SetDark(bool dark) { SetDarkCore(dark); }
     public static void SetTableSizeForTest(int rows, int cols) { TestTableSize = rows <= 0 ? null : new[] { rows, cols }; }
+
+    // shortcuts / commands
+    public bool Shortcut(string display) { return RunShortcut(display); }
+    public void FocusFileName() { fileNameBox.Focus(); }
+    public bool ShortcutRealFocus(string display) { return RunShortcut(display, false); }
+    public bool IsShortcutBound(string display) { return ShortcutBound(display); }
+    public void GoToLineForTest(int line) { GoToLine(line); }
+    public int CaretLine() { return editor.TextArea.Caret.Line; }
+    public int CaretColumn() { return editor.TextArea.Caret.Column; }
+    public int ReplaceAllForTest(string find, string repl, bool matchCase) { return FrReplaceAll(find, repl, matchCase); }
+    public bool FindNextForTest(string find, bool matchCase) { return FrNext(find, matchCase); }
+    public void NewDocForTest() { NewDoc(); }
+    public void UndoForTest() { editor.Undo(); }
+    public bool CanUndoForTest() { return editor.Document.UndoStack.CanUndo; }
+    public int UndoGroupsProbe() { int n = 0; while (editor.Document.UndoStack.CanUndo && n < 100) { editor.Undo(); n++; } return n; }
+    public bool HighlightingOn() { return editor.SyntaxHighlighting != null; }
+    public string HeadingColorHex()
+    {
+        var def = editor.SyntaxHighlighting;
+        if (def == null) return "";
+        var c = def.GetNamedColor("Heading");
+        return c == null || c.Foreground == null ? "" : c.Foreground.GetBrush(null).ToString();
+    }
+    public string EditorBackgroundHex() { var b = editor.Background as SolidColorBrush; return b == null ? "" : b.Color.ToString(); }
+    public string SelectionBrushHex() { var b = editor.TextArea.SelectionBrush as SolidColorBrush; return b == null ? "" : b.Color.ToString(); }
+    public bool LineNumbersShown() { return editor.ShowLineNumbers; }
+    public bool WordWrapOn() { return editor.WordWrap; }
+    public bool PlaceholderVisible() { return placeholder.Visibility == Visibility.Visible; }
+    public bool SearchPanelOpen() { return searchPanel != null && !searchPanel.IsClosed; }
+    public double FontSizeNow() { return editor.FontSize; }
+    public void ZoomForTest(int dir) { ZoomBy(dir); }
+    public void ZoomResetForTest() { ZoomReset(); }
+    public int ZoomPercentForTest() { return Status.ZoomPercent; }
+    public int ViewModeNow() { return viewMode; }
+    public bool PinnedNow() { return Topmost; }
+    public void RecoveryTickForTest() { RecoveryTick(true); }
+    public static string RecoveryMdPath { get { return RecoveryMd; } }
+    public static string RecoveryJsonPath { get { return RecoveryJson; } }
+    public void OfferRecoveryForTest(bool yes) { TestRecoveryAnswer = yes; try { OfferRecovery(); } finally { TestRecoveryAnswer = null; } }
+    public static void SetGoToLineForTest(int line) { TestGoToLine = line; }
 
     public void RenderToPng(string path)
     {
