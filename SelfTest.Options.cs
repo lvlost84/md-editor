@@ -42,7 +42,7 @@ static partial class SelfTest
         var ow = w.OptWinForTest;
         w.ShowOptionsForTest();
         Check("opt: second open reuses the same window", ReferenceEquals(ow, w.OptWinForTest));
-        Check("opt: window shows defaults", ow.LineNoSw.IsOn && ow.WrapSw.IsOn && ow.CurLineSw.IsOn && ow.HiliteSw.IsOn && !ow.PinSw.IsOn && ow.ThemeSeg.Selected == 0 && ow.ViewSeg.Selected == 1 && ow.IndentSeg.Selected == 0 && ow.AutosaveSeg.Selected == 1 && ow.FontSeg.Selected == 0,
+        Check("opt: window shows defaults", ow.LineNoSw.IsOn && ow.WrapSw.IsOn && ow.CurLineSw.IsOn && ow.HiliteSw.IsOn && !ow.PinSw.IsOn && ow.ThemeSeg.Selected == 0 && ow.ViewSeg.Selected == 1 && ow.IndentSeg.Selected == 0 && ow.AutosaveSeg.Selected == 1 && ow.FontPicker.Current.StartsWith("기본"),
             ow.LineNoSw.IsOn + " " + ow.WrapSw.IsOn + " " + ow.IndentSeg.Selected + " " + ow.AutosaveSeg.Selected);
         Check("opt: size label shows 14.5 pt", ow.SizeLabel == "14.5 pt", ow.SizeLabel);
 
@@ -77,15 +77,19 @@ static partial class SelfTest
         ow.AutosaveSeg.Pick(3, true);
         Check("opt: autosave 2min", w.AutosaveIntervalNow() == 120 && Prefs.Load().AutosaveSec == 120);
 
-        if (ow.FontSeg.Count > 1)
-        {
-            ow.FontSeg.Pick(1, true); Pump(100);
-            string fn = ow.FontNames[1];
-            Check("opt: font choice -> editor font + saved", w.EditorFontNow().StartsWith(fn) && Prefs.Load().FontName == fn, w.EditorFontNow());
-            ow.FontSeg.Pick(0, true);
-            Check("opt: font default restored", w.EditorFontNow().StartsWith("Cascadia Mono") && Prefs.Load().FontName == "");
-        }
-        else Check("opt: font choice (only default available, skipped)", true);
+        var fp = ow.FontPicker;
+        Check("opt: font list has many installed fonts", fp.Names.Count > 10 && fp.Names[0] == "", fp.Names.Count.ToString());
+        int ci = fp.Names.IndexOf("Consolas"); if (ci < 0) ci = 1;
+        string fn = fp.Names[ci];
+        fp.Choose(ci); Pump(100);
+        Check("opt: font choice from list -> editor font + saved + label", w.EditorFontNow().StartsWith(fn) && Prefs.Load().FontName == fn && fp.Current.Length > 0, w.EditorFontNow());
+        fp.Choose(fp.Names.Count - 1); Pump(100);
+        Check("opt: last font in list selectable", Prefs.Load().FontName == fp.Names[fp.Names.Count - 1]);
+        fp.Choose(0); Pump(100);
+        Check("opt: font default restored", w.EditorFontNow().StartsWith("Cascadia Mono") && Prefs.Load().FontName == "");
+        w.OptSetFontName(fn); Pump(50);
+        Check("opt: window sync shows the stored font", fp.Current.Length > 0 && !fp.Current.StartsWith("기본"), fp.Current);
+        w.OptSetFontName("");
 
         w.ZoomForTest(1); Pump(50);
         Check("opt: zoom from main window updates the size label", ow.SizeLabel == "15.5 pt", ow.SizeLabel);
@@ -127,6 +131,7 @@ static partial class SelfTest
         Check("opt: shortcut listed in help table and tooltips", Shortcuts.Get("options") != null && Shortcuts.Tip("옵션", "options") == "옵션 (Ctrl+,)", Shortcuts.Tip("옵션", "options"));
         Check("opt: gear icon exists", Array.IndexOf(Icons.Names.ToArray(), "settings") >= 0);
 
+        w.SaveForTest(Path.Combine(work, "opt.md"));   // 저장해 두어야 닫을 때 "저장할까요?" 질문이 뜨지 않는다
         w.Close(); Pump(200);
         try { File.Delete(Prefs.PathName); File.Delete(Settings.PathName); } catch { }
     }

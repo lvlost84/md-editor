@@ -104,10 +104,96 @@ class OptSeg : Border
     }
 }
 
+// 글꼴 선택: 누르면 설치된 모든 글꼴이 그 글꼴 모양으로 보이는 목록이 열린다
+class OptFontPick : Button
+{
+    public event Action<string> Picked;
+    public readonly List<string> Names = new List<string>();     // 저장 값 ("" = 기본)
+    readonly List<string> display = new List<string>();
+    readonly System.Windows.Controls.Primitives.Popup pop;
+    readonly ListBox lb;
+    readonly TextBlock cur;
+    bool setting;
+
+    public OptFontPick(string name)
+    {
+        SetResourceReference(StyleProperty, "TbBtn");
+        Width = 230; Margin = new Thickness(0); Padding = new Thickness(10, 4, 8, 4); HorizontalContentAlignment = HorizontalAlignment.Stretch;
+        System.Windows.Automation.AutomationProperties.SetName(this, name);
+        VerticalAlignment = VerticalAlignment.Center;
+        var g = new Grid { Width = 204 };
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        cur = new TextBlock { FontSize = 12.5, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
+        var arrow = new TextBlock { Text = "▾", Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+        Grid.SetColumn(arrow, 1);
+        g.Children.Add(cur); g.Children.Add(arrow);
+        Content = g;
+
+        lb = new ListBox { BorderThickness = new Thickness(0), Background = Brushes.Transparent, Width = 262, MaxHeight = 320 };
+        ScrollViewer.SetHorizontalScrollBarVisibility(lb, ScrollBarVisibility.Disabled);
+        Names.Add(""); display.Add("기본 (Cascadia Mono)");
+        var list = new List<KeyValuePair<string, string>>();
+        try
+        {
+            var ko = System.Globalization.CultureInfo.GetCultureInfo("ko-KR");
+            foreach (var f in Fonts.SystemFontFamilies)
+            {
+                string src = f.Source;
+                if (string.IsNullOrEmpty(src) || src.Length > 64 || src.IndexOfAny(new[] { ',', '<', '>', '"', '\'' }) >= 0 || src.StartsWith("@")) continue;
+                System.Windows.Markup.XmlLanguage lang = System.Windows.Markup.XmlLanguage.GetLanguage("ko-KR");
+                string d; if (!f.FamilyNames.TryGetValue(lang, out d) || string.IsNullOrEmpty(d)) d = src;
+                list.Add(new KeyValuePair<string, string>(src, d));
+            }
+        }
+        catch { }
+        list.Sort((a, b) => string.Compare(a.Value, b.Value, StringComparison.CurrentCultureIgnoreCase));
+        foreach (var kv in list) { Names.Add(kv.Key); display.Add(kv.Value); }
+        for (int i = 0; i < Names.Count; i++)
+        {
+            var t = new TextBlock { Text = display[i], FontSize = 14, TextTrimming = TextTrimming.CharacterEllipsis };
+            try { t.FontFamily = new FontFamily(MainWindow.FontStack(Names[i])); } catch { }
+            var it = new ListBoxItem { Content = t };
+            it.SetResourceReference(StyleProperty, "OptListItem");
+            lb.Items.Add(it);
+        }
+        var box = new Border { BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(0, 4, 0, 4), Child = lb, Margin = new Thickness(0, 4, 8, 8) };
+        Theme.Bind(box, Border.BackgroundProperty, "Paper"); Theme.Bind(box, Border.BorderBrushProperty, "BorderStrong");
+        box.Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 10, ShadowDepth = 2, Opacity = 0.25 };
+        pop = new System.Windows.Controls.Primitives.Popup { PlacementTarget = this, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom, StaysOpen = false, AllowsTransparency = true, Child = box };
+        lb.SelectionChanged += (s, e) =>
+        {
+            if (setting || lb.SelectedIndex < 0) return;
+            pop.IsOpen = false;
+            cur.Text = display[lb.SelectedIndex];
+            if (Picked != null) Picked(Names[lb.SelectedIndex]);
+        };
+        Click += (s, e) =>
+        {
+            pop.IsOpen = !pop.IsOpen;
+            if (pop.IsOpen && lb.SelectedItem != null) lb.ScrollIntoView(lb.SelectedItem);
+        };
+        Set("");
+    }
+
+    public void Set(string name)
+    {
+        int i = Names.IndexOf(name ?? "");
+        if (i < 0) i = 0;
+        setting = true;
+        lb.SelectedIndex = i; cur.Text = display[i];
+        setting = false;
+    }
+
+    public int Choose(int i) { if (i < 0 || i >= Names.Count) return -1; lb.SelectedIndex = i; return i; }   // 테스트: 목록에서 고른 것과 같다
+    public string Current { get { return cur.Text; } }
+}
+
 class OptionsWindow : Window
 {
     readonly MainWindow main;
-    OptSeg theme, view, font, indent, autosave;
+    OptSeg theme, view, indent, autosave;
+    OptFontPick font;
     OptSwitch pin, lineNo, wrap, curLine, hilite;
     TextBlock sizeText;
     bool syncing;
@@ -115,7 +201,6 @@ class OptionsWindow : Window
     // 선택지 (저장 값)
     static readonly int[] IndentVals = { 2, 4, 8 };
     static readonly int[] AutoVals = { 10, 20, 60, 120 };
-    internal readonly List<string> FontNames = new List<string>();   // "" = 기본
 
     public OptionsWindow(MainWindow owner)
     {
@@ -165,16 +250,9 @@ class OptionsWindow : Window
 
         // ---- 편집기
         body.Children.Add(Section("편집기"));
-        var names = new List<string>(); var labels = new List<string>();
-        FontNames.Add(""); labels.Add("기본");
-        foreach (var f in new[] { "Consolas", "D2Coding", "Malgun Gothic", "Courier New" })
-        {
-            if (!MainWindow.FontInstalled(f)) continue;
-            FontNames.Add(f); labels.Add(f == "Malgun Gothic" ? "맑은 고딕" : f);
-        }
-        font = new OptSeg("편집 글꼴", labels.ToArray());
-        font.Picked += i => { if (!syncing) main.OptSetFontName(FontNames[i]); };
-        body.Children.Add(Row("글꼴", "기본 = Cascadia Mono", font));
+        font = new OptFontPick("편집 글꼴");
+        font.Picked += n => { if (!syncing) main.OptSetFontName(n); };
+        body.Children.Add(Row("글꼴", "설치된 모든 글꼴 중에서 고릅니다 (고정폭 글꼴 추천)", font));
 
         var stepper = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
         var minus = StepBtn("−", "글자 작게"); var plus = StepBtn("+", "글자 크게");
@@ -258,7 +336,7 @@ class OptionsWindow : Window
             theme.Pick(Theme.IsDark ? 1 : 0, false);
             view.Pick(main.OptView, false);
             pin.Set(main.OptPin, false);
-            int fi = FontNames.IndexOf(main.OptPrefs.FontName); font.Pick(fi < 0 ? 0 : fi, false);
+            font.Set(main.OptPrefs.FontName);
             sizeText.Text = main.OptFontSize.ToString("0.#") + " pt";
             lineNo.Set(main.OptPrefs.ShowLineNumbers, false);
             wrap.Set(main.OptPrefs.WordWrap, false);
@@ -273,7 +351,7 @@ class OptionsWindow : Window
     // ---- 테스트 훅 (화면 클릭 대신 컨트롤 직접 조작)
     internal OptSeg ThemeSeg { get { return theme; } }
     internal OptSeg ViewSeg { get { return view; } }
-    internal OptSeg FontSeg { get { return font; } }
+    internal OptFontPick FontPicker { get { return font; } }
     internal OptSeg IndentSeg { get { return indent; } }
     internal OptSeg AutosaveSeg { get { return autosave; } }
     internal OptSwitch PinSw { get { return pin; } }

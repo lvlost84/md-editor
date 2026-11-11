@@ -109,6 +109,20 @@ static class Theme
  </Style.Triggers>
 </Style>
 
+<!-- 목록 항목 (글꼴 선택 목록 등) -->
+<Style x:Key='OptListItem' TargetType='ListBoxItem'>
+ <Setter Property='Foreground' Value='{DynamicResource InkBrush}'/>
+ <Setter Property='Cursor' Value='Hand'/>
+ <Setter Property='FocusVisualStyle' Value='{x:Null}'/>
+ <Setter Property='Template'><Setter.Value><ControlTemplate TargetType='ListBoxItem'>
+  <Border x:Name='b' Background='Transparent' CornerRadius='5' Padding='10,5' Margin='2,0'>
+   <ContentPresenter TextElement.Foreground='{TemplateBinding Foreground}'/></Border>
+  <ControlTemplate.Triggers>
+   <Trigger Property='IsMouseOver' Value='True'><Setter TargetName='b' Property='Background' Value='{DynamicResource HoverBrush}'/></Trigger>
+   <Trigger Property='IsSelected' Value='True'><Setter TargetName='b' Property='Background' Value='{DynamicResource AccentSoftBrush}'/><Setter Property='Foreground' Value='{DynamicResource AccentBrush}'/></Trigger>
+  </ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
+</Style>
+
 <Style TargetType='ToolTip'>
  <Setter Property='Background' Value='{DynamicResource PaperBrush}'/>
  <Setter Property='Foreground' Value='{DynamicResource InkBrush}'/>
