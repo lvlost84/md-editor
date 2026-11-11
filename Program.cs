@@ -59,7 +59,8 @@ static class Program
     static int RealMain(string[] args)
     {
         if (args.Length > 0 && args[0] == "--selftest") return SelfTest.Run(args);
-        if (args.Length > 1 && (args[0] == "--help-shot" || args[0] == "--shot")) SandboxProfile();   // 개발용 캡처는 실제 %AppData%\MdEditor(설정/복구 파일)를 건드리지 않는다
+        if (args.Length > 1 && (args[0] == "--help-shot" || args[0] == "--shot" || args[0] == "--opt-shot")) SandboxProfile();
+        if (args.Length > 1 && args[0] == "--opt-shot") { SetBrowserEmulation(); return OptShot(args); }   // 개발용 캡처는 실제 %AppData%\MdEditor(설정/복구 파일)를 건드리지 않는다
         if (args.Length > 1 && args[0] == "--help-shot") { SetBrowserEmulation(); return HelpWindow.ShotAndExit(args[1], args.Length > 2 && args[2] == "dark"); }
         if (args.Length > 1 && args[0] == "--shot") { SetBrowserEmulation(); return MainShot(args); }
         var sw = Stopwatch.StartNew();
@@ -137,6 +138,40 @@ static class Program
                 }
             }
             catch (Exception ex) { Log.Error("shot", ex); }
+            app.Shutdown();
+        };
+        t.Start();
+        return app.Run();
+    }
+
+    // 개발용: `MdEditor.exe --opt-shot <png> [dark]` — 옵션 창만 캡처 (임시 프로필)
+    static int OptShot(string[] args)
+    {
+        string png = args[1];
+        bool dark = args.Length > 2 && args[2] == "dark";
+        var app = EnsureApp();
+        var w = new MainWindow();
+        w.recoveryHandled = true;
+        w.Left = 20; w.Top = 20; w.Width = 1280; w.Height = 820;
+        w.Show();
+        if (dark) w.SetDark(true);
+        w.ShowOptionsForTest();
+        var t = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        t.Tick += (s, e) =>
+        {
+            t.Stop();
+            try
+            {
+                var ow = w.OptWinForTest;
+                var h = new System.Windows.Interop.WindowInteropHelper(ow).Handle;
+                using (var bmp = new System.Drawing.Bitmap((int)ow.ActualWidth, (int)ow.ActualHeight))
+                using (var g = System.Drawing.Graphics.FromImage(bmp))
+                {
+                    var dc = g.GetHdc(); PrintWindow(h, dc, 2); g.ReleaseHdc(dc);
+                    bmp.Save(png, System.Drawing.Imaging.ImageFormat.Png);
+                }
+            }
+            catch (Exception ex) { Log.Error("optshot", ex); }
             app.Shutdown();
         };
         t.Start();

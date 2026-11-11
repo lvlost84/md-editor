@@ -40,6 +40,7 @@ partial class MainWindow
             { "moveup", () => MoveLines(true) }, { "movedown", () => MoveLines(false) },
             { "help", ShowHelp }, { "logfolder", OpenDataFolder }, { "log", ShowLog },
             { "dark", ToggleDark }, { "pin", TogglePin }, { "view", CycleView }, { "zoomreset", ZoomReset },
+            { "options", ShowOptions },
         };
         foreach (var d in Shortcuts.All)
         {

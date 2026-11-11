@@ -69,6 +69,7 @@ partial class MainWindow : Window
         Topmost = prefs.Pin;
         UpdateModeUi();
         SetupRecovery();
+        ApplyOptions();
         Closing += OnClosing;
         Closed += (s, e) => { SaveSettings(); StopBackground(); };
     }
@@ -142,6 +143,7 @@ partial class MainWindow : Window
         darkBtn = themeBtn;
         right.Children.Add(themeBtn);
         right.Children.Add(IconBtn("help", () => ShowHelp(), Shortcuts.Tip("마크다운 문법 도움말", "help")));
+        right.Children.Add(IconBtn("settings", () => ShowOptions(), Shortcuts.Tip("옵션", "options")));
         right.Children.Add(Sep());
         right.Children.Add(IconBtn("export", () => ExportHtml(), "HTML로 내보내기"));
         right.Children.Add(IconBtn("print", () => PrintPdf(), Shortcuts.Tip("인쇄 / PDF", "print")));
@@ -351,6 +353,7 @@ partial class MainWindow : Window
         SaveSettings();
         ApplyEditorTheme();
         RefreshPreviewNow(false);
+        if (optWin != null) optWin.Sync();
     }
 
     void SaveSettings()

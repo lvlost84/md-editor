@@ -107,7 +107,7 @@ partial class MainWindow
 
     void UpdateHighlightMode()
     {
-        bool big = editor.Document.TextLength > HighlightLimit;
+        bool big = !prefs.Highlight || editor.Document.TextLength > HighlightLimit;
         if (big == highlightOff) return;
         highlightOff = big;
         editor.SyntaxHighlighting = big ? null : mdDef;
@@ -145,6 +145,7 @@ partial class MainWindow
         Status.ZoomPercent = ZoomPercentNow();
         Status.ViewMode = ViewNames[viewMode];
         Status.Pinned = Topmost;
+        if (optWin != null) optWin.Sync();
         footZoom.Text = Status.ZoomPercent + "%";
         footMode.Text = Status.ViewMode + (Topmost ? " · 항상 위" : "");
         UpdatePinUi();

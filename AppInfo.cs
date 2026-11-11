@@ -3,7 +3,7 @@ using System.Windows.Media.Imaging;
 
 static class AppInfo
 {
-    public const string Version = "3.0.0";   // 3.0.0: AvalonEdit+Markdig, 워드식 단축키, 새 UI
+    public const string Version = "3.1.0";   // 3.1.0: 옵션 창 / 3.0.0: AvalonEdit+Markdig, 워드식 단축키, 새 UI
     public const string Developer = "";
     public const string Title = "로컬 마크다운 에디터";
 

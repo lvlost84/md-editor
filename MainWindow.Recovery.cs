@@ -20,7 +20,7 @@ partial class MainWindow
 
     void SetupRecovery()
     {
-        recoveryTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
+        recoveryTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(prefs.AutosaveSec) };
         recoveryTimer.Tick += (s, e) => { try { RecoveryTick(false); } catch (Exception ex) { Log.Error("recovery tick", ex); } };
         recoveryTimer.Start();
     }

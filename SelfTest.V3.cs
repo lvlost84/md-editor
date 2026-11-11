@@ -25,6 +25,7 @@ static partial class SelfTest
         Try("v3-ui", () => V3Ui(work));
         Try("v3-corrupt-settings", () => V3Corrupt(work));
         Try("v3-embedded-dll", () => V3Embedded(work));
+        Try("options", () => OptionsTests(work));
     }
 
     // true when the theme (icon) button carries a tooltip containing text

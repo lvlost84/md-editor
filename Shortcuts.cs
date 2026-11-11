@@ -25,6 +25,7 @@ class ShortcutDef
         if (k >= Key.D0 && k <= Key.D9) return ((int)k - (int)Key.D0).ToString();
         if (k == Key.OemTilde) return "`";
         if (k == Key.Return) return "Enter";
+        if (k == Key.OemComma) return ",";
         return k.ToString();
     }
 }
@@ -52,10 +53,11 @@ static class Shortcuts
         D("find", Key.F, C, "찾기 (대/소문자, 정규식)", true, true), D("findnext", Key.F3, N, "다음 찾기", true, true), D("findprev", Key.F3, S, "이전 찾기", true, true),
         D("replace", Key.H, C, "바꾸기 창"), D("goto", Key.G, C, "줄 이동"),
         D("moveup", Key.Up, A | S, "현재 줄(선택한 줄) 위로 이동", true), D("movedown", Key.Down, A | S, "현재 줄(선택한 줄) 아래로 이동", true),
-        D("indent", Key.Tab, N, "선택한 줄 들여쓰기 (2칸)", true, true), D("outdent", Key.Tab, S, "선택한 줄 내어쓰기 (2칸)", true, true),
+        D("indent", Key.Tab, N, "선택한 줄 들여쓰기 (칸 수는 옵션에서)", true, true), D("outdent", Key.Tab, S, "선택한 줄 내어쓰기", true, true),
         D("help", Key.F1, N, "이 도움말"), D("logfolder", Key.L, C | A, "로그 폴더 열기"), D("log", Key.F12, S, "진단 정보(로그) 보기"),
         D("dark", Key.D, C | A, "다크/라이트 모드 전환"), D("pin", Key.P, C | A, "항상 위 켜기/끄기"), D("view", Key.V, C | S, "보기 전환 (편집 / 분할 / 미리보기)"),
         D("zoomreset", Key.D0, C, "글자 크기 100%로 (Ctrl+마우스 휠로 확대/축소)"),
+        D("options", Key.OemComma, C, "옵션 창 (글꼴, 줄 번호, 자동 저장 등)"),
     };
 
     public static ShortcutDef Get(string id)
