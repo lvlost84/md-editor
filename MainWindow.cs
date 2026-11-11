@@ -172,12 +172,11 @@ partial class MainWindow : Window
         fileNameBox.ToolTip = "파일 이름 (저장할 때 기본 이름)";
         fileNameBox.TextChanged += (s, e) => { UpdateDirtyUi(); UpdateFooter(); };
         brand.Children.Add(fileNameBox);
+        brand.Visibility = Visibility.Collapsed;   // 파일 이름은 제목 표시줄에 이미 있으므로 화면엔 안 그린다 (저장 기본 이름 보관용으로만 유지)
         dock.Children.Add(brand);
-        bar.Child = dock;
-        wrap.Children.Add(bar);
 
         // 2줄: 서식 도구 모음 (아이콘만, 이름/단축키는 툴팁)
-        var tbBar = new Border { Padding = new Thickness(12, 2, 12, 8), BorderThickness = new Thickness(0, 0, 0, 1) };
+        var tbBar = new Border { Padding = new Thickness(12, 8, 12, 8), BorderThickness = new Thickness(0, 0, 0, 1) };
         Theme.Bind(tbBar, Border.BackgroundProperty, "Bg"); Theme.Bind(tbBar, Border.BorderBrushProperty, "Border");
         var tb = new WrapPanel { VerticalAlignment = VerticalAlignment.Center };
         tb.Children.Add(IconBtn("new", NewDoc, Shortcuts.Tip("새 문서", "new")));
@@ -211,7 +210,8 @@ partial class MainWindow : Window
         tb.Children.Add(Sep());
         tb.Children.Add(IconBtn("search", () => System.Windows.Input.ApplicationCommands.Find.Execute(null, editor.TextArea), Shortcuts.Tip("찾기", "find")));
         tb.Children.Add(IconBtn("replace", ShowReplace, Shortcuts.Tip("바꾸기", "replace")));
-        tbBar.Child = tb;
+        dock.Children.Add(tb);
+        tbBar.Child = dock;
         wrap.Children.Add(tbBar);
 
         SetThemeIcon();

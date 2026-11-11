@@ -50,7 +50,7 @@ partial class MainWindow
 
     // shortcuts / commands
     public bool Shortcut(string display) { return RunShortcut(display); }
-    public void FocusFileName() { fileNameBox.Focus(); }
+    public void FocusFileName() { themeBtn.Focus(); }   // 파일 이름 칸은 화면에서 숨겼으므로 편집창 밖의 다른 컨트롤로 포커스를 옮긴다
     public bool ShortcutRealFocus(string display) { return RunShortcut(display, false); }
     public bool IsShortcutBound(string display) { return ShortcutBound(display); }
     public void GoToLineForTest(int line) { GoToLine(line); }
