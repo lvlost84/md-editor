@@ -131,6 +131,19 @@ static partial class SelfTest
         Check("opt: shortcut listed in help table and tooltips", Shortcuts.Get("options") != null && Shortcuts.Tip("옵션", "options") == "옵션 (Ctrl+,)", Shortcuts.Tip("옵션", "options"));
         Check("opt: gear icon exists", Array.IndexOf(Icons.Names.ToArray(), "settings") >= 0);
 
+        // ---- 프로그램 정보 창
+        string ah = AboutWindow.BuildHtml(false), ad = AboutWindow.BuildHtml(true);
+        Check("about: html has version, licenses and libraries", ah.Contains(AppInfo.Version) && ah.Contains("MIT License") && ah.Contains("BSD 2-Clause") && ah.Contains("AvalonEdit") && ah.Contains("Markdig") && ah.Contains("6.3.0.90") && ah.Contains("0.37.0"));
+        Check("about: html has usage + tech + data sections, no developer e-mail", ah.Contains("id=\"a-use\"") && ah.Contains("id=\"a-tech\"") && ah.Contains("id=\"a-data\"") && ah.Contains("id=\"a-lic\"") && !ah.Contains("@example"));
+        Check("about: dark page differs from light", ad != ah && ad.Contains("#1e2024"));
+        Check("about: html tags in texts are escaped (no stray script)", !ah.Contains("<script"));
+        Check("about: Shift+F1 opens window (singleton) and F1 help still separate", w.IsShortcutBound("Shift+F1") && w.IsShortcutBound("F1") && w.Shortcut("Shift+F1") && w.AboutOpenForTest);
+        w.Shortcut("Shift+F1");
+        w.CloseAboutForTest(); Pump(200);
+        Check("about: closes and can reopen", !w.AboutOpenForTest && w.Shortcut("Shift+F1") && w.AboutOpenForTest);
+        w.CloseAboutForTest(); Pump(100);
+        Check("about: info icon exists", Icons.Names.Contains("info"));
+
         w.SaveForTest(Path.Combine(work, "opt.md"));   // 저장해 두어야 닫을 때 "저장할까요?" 질문이 뜨지 않는다
         w.Close(); Pump(200);
         try { File.Delete(Prefs.PathName); File.Delete(Settings.PathName); } catch { }

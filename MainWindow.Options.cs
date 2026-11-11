@@ -30,6 +30,17 @@ partial class MainWindow
         return string.IsNullOrEmpty(name) ? "Cascadia Mono, Consolas, Malgun Gothic" : name + ", Consolas, Malgun Gothic";
     }
 
+    AboutWindow aboutWin;
+    void ShowAbout()
+    {
+        if (aboutWin != null) { aboutWin.Activate(); return; }
+        aboutWin = new AboutWindow(this, Theme.IsDark);
+        aboutWin.Closed += (s, e) => { aboutWin = null; try { editor.Focus(); } catch { } };
+        aboutWin.Show();
+    }
+    public bool AboutOpenForTest { get { return aboutWin != null; } }
+    public void CloseAboutForTest() { if (aboutWin != null) aboutWin.Close(); }
+
     void ShowOptions()
     {
         if (optWin != null) { optWin.Activate(); return; }

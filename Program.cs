@@ -59,7 +59,8 @@ static class Program
     static int RealMain(string[] args)
     {
         if (args.Length > 0 && args[0] == "--selftest") return SelfTest.Run(args);
-        if (args.Length > 1 && (args[0] == "--help-shot" || args[0] == "--shot" || args[0] == "--opt-shot")) SandboxProfile();
+        if (args.Length > 1 && (args[0] == "--help-shot" || args[0] == "--shot" || args[0] == "--opt-shot" || args[0] == "--about-shot")) SandboxProfile();
+        if (args.Length > 1 && args[0] == "--about-shot") { SetBrowserEmulation(); return AboutShot(args); }
         if (args.Length > 1 && args[0] == "--opt-shot") { SetBrowserEmulation(); return OptShot(args); }   // 개발용 캡처는 실제 %AppData%\MdEditor(설정/복구 파일)를 건드리지 않는다
         if (args.Length > 1 && args[0] == "--help-shot") { SetBrowserEmulation(); return HelpWindow.ShotAndExit(args[1], args.Length > 2 && args[2] == "dark"); }
         if (args.Length > 1 && args[0] == "--shot") { SetBrowserEmulation(); return MainShot(args); }
@@ -172,6 +173,43 @@ static class Program
                 }
             }
             catch (Exception ex) { Log.Error("optshot", ex); }
+            app.Shutdown();
+        };
+        t.Start();
+        return app.Run();
+    }
+
+    // 개발용: `MdEditor.exe --about-shot <png> [dark]` — 프로그램 정보 창만 캡처
+    static int AboutShot(string[] args)
+    {
+        string png = args[1];
+        bool dark = args.Length > 2 && args[2] == "dark";
+        var app = EnsureApp();
+        var w = new MainWindow();
+        w.recoveryHandled = true;
+        w.Left = 20; w.Top = 20; w.Width = 1280; w.Height = 820;
+        w.Show();
+        if (dark) w.SetDark(true);
+        w.Shortcut("Shift+F1");
+        var t = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        t.Tick += (s, e) =>
+        {
+            t.Stop();
+            try
+            {
+                foreach (Window aw in app.Windows)
+                {
+                    if (!(aw is AboutWindow)) continue;
+                    var h = new System.Windows.Interop.WindowInteropHelper(aw).Handle;
+                    using (var bmp = new System.Drawing.Bitmap((int)aw.ActualWidth, (int)aw.ActualHeight))
+                    using (var g = System.Drawing.Graphics.FromImage(bmp))
+                    {
+                        var dc = g.GetHdc(); PrintWindow(h, dc, 2); g.ReleaseHdc(dc);
+                        bmp.Save(png, System.Drawing.Imaging.ImageFormat.Png);
+                    }
+                }
+            }
+            catch (Exception ex) { Log.Error("aboutshot", ex); }
             app.Shutdown();
         };
         t.Start();

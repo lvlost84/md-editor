@@ -143,6 +143,7 @@ partial class MainWindow : Window
         darkBtn = themeBtn;
         right.Children.Add(themeBtn);
         right.Children.Add(IconBtn("help", () => ShowHelp(), Shortcuts.Tip("마크다운 문법 도움말", "help")));
+        right.Children.Add(IconBtn("info", () => ShowAbout(), Shortcuts.Tip("프로그램 정보 · 사용 안내 · 라이선스", "about")));
         right.Children.Add(IconBtn("settings", () => ShowOptions(), Shortcuts.Tip("옵션", "options")));
         right.Children.Add(Sep());
         right.Children.Add(IconBtn("export", () => ExportHtml(), "HTML로 내보내기"));

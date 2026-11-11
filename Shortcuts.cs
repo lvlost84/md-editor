@@ -57,6 +57,7 @@ static class Shortcuts
         D("help", Key.F1, N, "이 도움말"), D("logfolder", Key.L, C | A, "로그 폴더 열기"), D("log", Key.F12, S, "진단 정보(로그) 보기"),
         D("dark", Key.D, C | A, "다크/라이트 모드 전환"), D("pin", Key.P, C | A, "항상 위 켜기/끄기"), D("view", Key.V, C | S, "보기 전환 (편집 / 분할 / 미리보기)"),
         D("zoomreset", Key.D0, C, "글자 크기 100%로 (Ctrl+마우스 휠로 확대/축소)"),
+        D("about", Key.F1, S, "프로그램 정보 · 사용 안내 · 라이선스"),
         D("options", Key.OemComma, C, "옵션 창 (글꼴, 줄 번호, 자동 저장 등)"),
     };
 
