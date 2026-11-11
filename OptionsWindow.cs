@@ -135,6 +135,7 @@ class OptionsWindow : Window
         var fd = new DockPanel();
         var close = new Button { Content = "닫기", MinWidth = 76, Margin = new Thickness(0), IsDefault = true, IsCancel = true };
         close.SetResourceReference(StyleProperty, "PrimaryBtn");
+        close.Click += (s, e) => Close();   // 비모달 창이라 IsCancel 만으로는 닫히지 않는다
         DockPanel.SetDock(close, Dock.Right); fd.Children.Add(close);
         var reset = new Button { Content = "편집 옵션 기본값으로", Margin = new Thickness(0, 0, 8, 0) };
         reset.SetResourceReference(StyleProperty, "TbBtn");
@@ -280,5 +281,6 @@ class OptionsWindow : Window
     internal OptSwitch WrapSw { get { return wrap; } }
     internal OptSwitch CurLineSw { get { return curLine; } }
     internal OptSwitch HiliteSw { get { return hilite; } }
+    internal void ClickCloseForTest() { ((Button)((DockPanel)((Border)((DockPanel)Content).Children[0]).Child).Children[0]).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); }
     internal string SizeLabel { get { return sizeText.Text; } }
 }

@@ -119,7 +119,8 @@ static partial class SelfTest
         Check("opt: reset keeps font size", w.FontSizeNow() == 16.5, w.FontSizeNow().ToString());
         Check("opt: reset syncs window controls", ow.WrapSw.IsOn && ow.LineNoSw.IsOn && ow.IndentSeg.Selected == 0 && ow.AutosaveSeg.Selected == 1);
 
-        ow.Close(); Pump(200);
+        ow.ClickCloseForTest(); Pump(200);
+        Check("opt: 닫기 button closes the window", w.OptWinForTest == null);
         Check("opt: closing clears the singleton and reopening works", w.OptWinForTest == null && w.Shortcut("Ctrl+,") && w.OptWinForTest != null && !ReferenceEquals(ow, w.OptWinForTest));
         w.OptWinForTest.Close(); Pump(100);
 
