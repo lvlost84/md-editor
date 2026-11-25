@@ -47,8 +47,8 @@ out\MdEditor.exe --selftest <새로 만든 빈 폴더>
 | 이름 | 버전 | 라이선스 |
 |---|---|---|
 | [AvalonEdit](http://avalonedit.net/) | 6.3.0.90 | MIT |
-| [Markdig](https://github.com/lunet-io/markdig) | 0.37.0 | BSD-2-Clause |
+| [Markdig](https://github.com/xoofx/markdig) | 0.37.0 | BSD-2-Clause |
 | System.Memory / Buffers / Numerics.Vectors / Runtime.CompilerServices.Unsafe | 4.6.x | MIT |
 | [Lucide](https://lucide.dev) 아이콘 도형 참고 | — | ISC (Feather 부분 MIT) |
 
-라이선스 전문은 프로그램의 Shift+F1 창에서 볼 수 있습니다.
+라이선스 전문과 저작권 고지는 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)와 프로그램의 Shift+F1 창에 있으며, 배포 zip에도 함께 들어 있습니다.

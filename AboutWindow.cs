@@ -40,7 +40,7 @@ class AboutWindow : Window
     static readonly string[][] Libs =
     {
         new[] { "AvalonEdit", "6.3.0.90", "MIT", "© 2000-2023 AlphaSierraPapa for the SharpDevelop Team", "편집창 (줄 번호, 큰 문서 처리, 색 표시, 찾기)", "http://www.avalonedit.net/" },
-        new[] { "Markdig", "0.37.0", "BSD-2-Clause", "© Alexandre Mutel", "마크다운 → HTML 변환 (미리보기, 내보내기)", "https://github.com/lunet-io/markdig" },
+        new[] { "Markdig", "0.37.0", "BSD-2-Clause", "© 2016-2026, Alexandre Mutel. All rights reserved.", "마크다운 → HTML 변환 (미리보기, 내보내기)", "https://github.com/xoofx/markdig" },
         new[] { "System.Memory", "4.6.31308", "MIT", "© Microsoft Corporation / .NET Foundation", "AvalonEdit·Markdig가 쓰는 .NET 보조 라이브러리", "https://github.com/dotnet/corefx" },
         new[] { "System.Buffers", "4.6.28619", "MIT", "© Microsoft Corporation / .NET Foundation", "위와 같음", "https://github.com/dotnet/corefx" },
         new[] { "System.Numerics.Vectors", "4.6.26515", "MIT", "© Microsoft Corporation / .NET Foundation", "위와 같음", "https://github.com/dotnet/corefx" },
@@ -136,7 +136,8 @@ class AboutWindow : Window
         b.Append(P("Copyright (c) Microsoft Corporation / .NET Foundation and Contributors (System.Memory, System.Buffers, System.Numerics.Vectors, System.Runtime.CompilerServices.Unsafe)"));
         b.Append(Pre(MitText));
         b.Append("<h3>BSD 2-Clause License — Markdig</h3>");
-        b.Append(P("Copyright (c) Alexandre Mutel. All rights reserved."));
+        b.Append(P("Copyright (c) 2016-2026, Alexandre Mutel"));
+        b.Append(P("All rights reserved."));
         b.Append(Pre(BsdText));
         b.Append("<h3>ISC License — Lucide (아이콘 모양 참고)</h3>");
         b.Append(P("Copyright (c) Lucide Contributors. Portions copyright (c) Cole Bemis (Feather, MIT License)."));
