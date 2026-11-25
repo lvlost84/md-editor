@@ -18,17 +18,20 @@ class AboutWindow : Window
         Theme.Bind(this, BackgroundProperty, "Bg");
         Content = browser;
         browser.Navigating += (s, e) => { if (e.Uri != null && e.Uri.Scheme != "about") e.Cancel = true; };   // 문서 안 #목차 이동만 허용
-        browser.LoadCompleted += (s, e) =>
-        {
-            try
-            {
-                var f = typeof(WebBrowser).GetField("_axIWebBrowser2", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-                if (f != null) { dynamic ax = f.GetValue(browser); if (ax != null) ax.Silent = true; }
-            }
-            catch { }
-        };
+        browser.LoadCompleted += (s, e) => Silence();
+        browser.Navigated += (s, e) => Silence();
         PreviewKeyDown += (s, e) => { if (e.Key == System.Windows.Input.Key.Escape) Close(); };
         browser.NavigateToString(BuildHtml(dark));
+    }
+
+    void Silence()   // 스크립트 오류 대화상자 억제
+    {
+        try
+        {
+            var f = typeof(WebBrowser).GetField("_axIWebBrowser2", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            if (f != null) { dynamic ax = f.GetValue(browser); if (ax != null) ax.Silent = true; }
+        }
+        catch { }
     }
 
     static string Esc(string s) { return s.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;"); }
@@ -89,8 +92,8 @@ class AboutWindow : Window
         var b = new StringBuilder();
         b.Append("<h1>" + Esc(AppInfo.Title) + "</h1>");
         b.Append(P("버전 " + AppInfo.Version + " · 내 컴퓨터에서만 동작하는 오프라인 마크다운 에디터 (exe 한 개, 설치·인터넷 불필요)"));
-        b.Append("<div class=\"toc\"><b>목차</b> <a href=\"about:blank#a-use\">사용 안내</a> · <a href=\"about:blank#a-data\">저장 위치·보안</a> · "
-               + "<a href=\"about:blank#a-tech\">사용한 기술</a> · <a href=\"about:blank#a-lic\">오픈소스 라이선스</a> · <a href=\"about:blank#a-text\">라이선스 전문</a></div>");
+        b.Append("<div class=\"toc\"><b>목차</b> " + HelpWindow.TocLink("a-use", "사용 안내") + " · " + HelpWindow.TocLink("a-data", "저장 위치·보안") + " · "
+               + HelpWindow.TocLink("a-tech", "사용한 기술") + " · " + HelpWindow.TocLink("a-lic", "오픈소스 라이선스") + " · " + HelpWindow.TocLink("a-text", "라이선스 전문") + "</div>");
 
         b.Append(Section("use", "사용 안내"));
         b.Append(Ul(

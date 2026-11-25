@@ -10,7 +10,7 @@ static partial class SelfTest
         foreach (var id in ids)
         {
             Check("help section t-" + id, light.Contains("id=\"t-" + id + "\""), null);
-            Check("help toc link t-" + id, light.Contains("href=\"about:blank#t-" + id + "\""), null);
+            Check("help toc link t-" + id, light.Contains("data-to=\"t-" + id + "\"") && !light.Contains("about:blank#"), null);
         }
         Check("help renders example table", light.Contains("<th") && light.Contains("사과"), null);
         Check("help renders bold example", light.Contains("<strong>굵게</strong>"), null);

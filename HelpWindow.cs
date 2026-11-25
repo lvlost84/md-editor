@@ -63,8 +63,14 @@ class HelpWindow : Window
         Content = browser;
         browser.Navigating += OnNavigating;
         browser.LoadCompleted += (s, e) => MakeSilent();
+        browser.Navigated += (s, e) => MakeSilent();
         PreviewKeyDown += (s, e) => { if (e.Key == System.Windows.Input.Key.Escape) Close(); };
         browser.NavigateToString(BuildHtml(dark));
+    }
+
+    internal object EvalForTest(string js)
+    {
+        try { return browser.InvokeScript("eval", new object[] { js }); } catch (Exception ex) { return "ERR " + ex.Message; }
     }
 
     void MakeSilent()
@@ -85,6 +91,12 @@ class HelpWindow : Window
         e.Cancel = true;
     }
 
+    // 목차 링크: 주소 이동(about:blank#id)은 NavigateToString 문서에서 빈 페이지/오류를 만들 수 있으므로, 이동 없이 스크립트로 해당 위치까지 스크롤한다
+    internal static string TocLink(string id, string title)
+    {
+        return "<a href=\"#\" data-to=\"" + id + "\" onclick=\"var e=document.getElementById('" + id + "');if(e){e.scrollIntoView(true);}return false;\">" + Esc(title) + "</a>";
+    }
+
     static string Esc(string s) { return s.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;"); }
 
     // 테스트용: 도움말 본문 HTML (Md 미리보기 CSS 재사용 + 도움말 전용 CSS)
@@ -96,8 +108,8 @@ class HelpWindow : Window
         body.Append("<p>왼쪽은 입력할 내용, 오른쪽은 미리보기에 표시되는 결과입니다. 예시를 복사해서 편집창에 붙여넣어 보세요.</p>");
         body.Append("<div class=\"toc\"><b>목차</b> ");
         for (int i = 0; i < Topics.Length; i++)
-            body.Append("<a href=\"about:blank#t-" + Topics[i].Id + "\">" + Esc(Topics[i].Title) + "</a>" + (i < Topics.Length - 1 ? " · " : ""));
-        body.Append(" · <a href=\"about:blank#t-keys\">단축키</a></div>");
+            body.Append(TocLink("t-" + Topics[i].Id, Topics[i].Title) + (i < Topics.Length - 1 ? " · " : ""));
+        body.Append(" · " + TocLink("t-keys", "단축키") + "</div>");
 
         foreach (var t in Topics)
         {

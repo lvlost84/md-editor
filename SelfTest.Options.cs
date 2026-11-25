@@ -131,6 +131,17 @@ static partial class SelfTest
         Check("opt: shortcut listed in help table and tooltips", Shortcuts.Get("options") != null && Shortcuts.Tip("옵션", "options") == "옵션 (Ctrl+,)", Shortcuts.Tip("옵션", "options"));
         Check("opt: gear icon exists", Array.IndexOf(Icons.Names.ToArray(), "settings") >= 0);
 
+        // ---- 도움말 목차 클릭: 오류/빈 페이지 없이 해당 위치로 스크롤
+        var hw = new HelpWindow(w, false);
+        hw.Left = -3000; hw.Top = 0; hw.ShowInTaskbar = false; hw.Show(); Pump(2500);
+        object h0 = hw.EvalForTest("document.documentElement.scrollTop + document.body.scrollTop");
+        hw.EvalForTest("document.querySelector('a[data-to=\"t-table\"]').click();");
+        Pump(500);
+        object h1 = hw.EvalForTest("document.documentElement.scrollTop + document.body.scrollTop");
+        object still = hw.EvalForTest("document.getElementById('t-table') ? 1 : 0");
+        Check("help toc click scrolls to section (no navigation, page intact)", Convert.ToDouble(h1) > Convert.ToDouble(h0) + 100 && Convert.ToInt32(still) == 1, h0 + " -> " + h1 + " / " + still);
+        hw.Close(); Pump(200);
+
         // ---- 프로그램 정보 창
         string ah = AboutWindow.BuildHtml(false), ad = AboutWindow.BuildHtml(true);
         Check("about: html has version, licenses and libraries", ah.Contains(AppInfo.Version) && ah.Contains("MIT License") && ah.Contains("BSD 2-Clause") && ah.Contains("AvalonEdit") && ah.Contains("Markdig") && ah.Contains("6.3.0.90") && ah.Contains("0.37.0"));
